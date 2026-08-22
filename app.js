@@ -854,10 +854,22 @@ function renderSales(from, to){
       <td>${s.discountPct? s.discountPct+"%":"—"}</td>
       <td><b>${peso(s.total)}</b></td>
       <td><button class="btn-ghost sm" data-view="${s.id}">🧾 View</button>
-          ${!s.refunded?`<button class="btn-danger sm" data-refund="${s.id}">↩</button>`:""}</td>
+          ${!s.refunded?`<button class="btn-danger sm" data-refund="${s.id}">↩</button>`:""}
+          <button class="btn-danger sm" data-delsale="${s.id}">🗑</button></td>
     </tr>`).join("")
     : `<tr><td colspan="7" class="muted" style="text-align:center;padding:30px">No sales in this range.</td></tr>`;
   $$("#salesBody [data-view]").forEach(b=>b.onclick=()=>showReceipt(sales.find(s=>s.id===+b.dataset.view)));
+  $$("#salesBody [data-delsale]").forEach(b=>b.onclick=async ()=>{
+    const s = sales.find(x=>x.id===+b.dataset.delsale);
+    if(!s) return;
+    if(!confirm(`PERMANENTLY DELETE receipt ${s.receipt} (${peso(s.total)})?
+This erases the record. Use the refund button if you only want to reverse it.`)) return;
+    if(!await ownerGate("Deleting a sales record requires the OWNER PIN")) return;
+    sales = sales.filter(x=>x.id!==s.id); saveSales();
+    DB.set("syncedIds", DB.get("syncedIds",[]).filter(i=>i!==s.id));
+    renderSales(); renderDashboard(); syncSales();
+    toast("Sales record deleted");
+  });
   $$("#salesBody [data-refund]").forEach(b=>b.onclick=async ()=>{
     const s = sales.find(x=>x.id===+b.dataset.refund);
     if(!s || s.refunded) return;

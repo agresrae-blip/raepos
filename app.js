@@ -1251,6 +1251,7 @@ $("#setQr").addEventListener("change", e=>{
   });
 });
 $("#removeQrBtn").onclick = ()=>{ settings.qr = ""; saveSettings(); applyQr(); toast("QR removed"); };
+$("#qrDoneBtn").onclick = ()=> $("#qrModal").classList.add("hidden"); // close ONLY the QR, keep checkout open
 $("#showQrBtn").onclick = ()=>{
   $("#qrImg").innerHTML = settings.qr
     ? `<img src="${settings.qr}" alt="pay QR">`

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Online Store</title>
 <script>try{document.documentElement.dataset.mode=localStorage.getItem("raepos_theme")||"light";}catch(e){}</script>
-<link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Patrick+Hand&family=Shantell+Sans:wght@800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Patrick+Hand&family=Quicksand:wght@500;700&family=Shantell+Sans:wght@800&display=swap" rel="stylesheet">
 <style>
 :root{--paper:#f8f5ee;--card:#fffdf6;--ink:#2f2b26;--mut:#7a7263;--line:#2f2b26;--shadow:rgba(47,43,38,.82);
   --mint:#bfe8cf;--blue:#bcd9f7;--peach:#ffd9b8;--yellow:#fdf3b3;--pink:#f9cdd8;--okc:#1d6f43;
@@ -137,6 +137,10 @@ if (TRACK_MODE) trackPage();
 fetch("/api/shop/" + encodeURIComponent(code)).then(r=>r.json()).then(d=>{
   if(!d.ok){ $("#offBox").classList.remove("hidden"); return; }
     if (d.store.theme) document.documentElement.dataset.theme = d.store.theme;
+  const F = { doodle:["\"Patrick Hand\",cursive","\"Gochi Hand\",cursive"],
+              clean:["\"Segoe UI\",system-ui,sans-serif","\"Segoe UI\",system-ui,sans-serif"],
+              round:["Quicksand,\"Segoe UI\",sans-serif","Quicksand,\"Segoe UI\",sans-serif"] }[d.store.font || "doodle"] || null;
+  if (F){ document.documentElement.style.setProperty("--font-hand", F[0]); document.documentElement.style.setProperty("--font-title", F[1]); }
   if (TRACK_MODE) return; // tracking page has its own header
   store = d.store; items = d.products;
   $("#head").innerHTML = (store.logo?`<img src="${store.logo}" alt="logo">`:"") +

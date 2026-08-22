@@ -1,7 +1,7 @@
 /* ================= RaePOS — Sketchy Edition (hand-drawn neubrutalism) =================
    Two modes: light (paper) & dark (chalkboard) — html[data-mode]
    ============================================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Patrick+Hand&family=Shantell+Sans:wght@500;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Patrick+Hand&family=Quicksand:wght@500;700&family=Shantell+Sans:wght@500;800&display=swap');
 
 :root{
   --paper:#f8f5ee; --card:#fffdf6; --ink:#2f2b26; --mut:#7a7263;
@@ -335,3 +335,7 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
   .sidebar-foot{padding-top:10px}
   .sidebar-foot .btn-block{font-size:.78rem;padding:8px 4px}
 }
+
+/* font picker */
+.font-opt{flex-direction:row;gap:8px;justify-content:center;padding:12px 8px;font-size:18px}
+.font-opt small{color:var(--mut)}

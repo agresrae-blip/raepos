@@ -995,6 +995,27 @@ const THEMES = [
   { id:"forest",  name:"🌿 Forest Nature",   desc:"green & calm" }
 ];
 function applyTheme(){ document.documentElement.dataset.theme = settings.theme || "sketchy"; }
+const FONTS = {
+  doodle: { label:"\u270F\uFE0F Doodle (handwriting)", hand:"\"Patrick Hand\",cursive", title:"\"Gochi Hand\",cursive", bold:"\"Shantell Sans\",cursive" },
+  clean:  { label:"\u25AB\uFE0F Clean (easy to read)",  hand:"\"Segoe UI\",system-ui,sans-serif", title:"\"Segoe UI\",system-ui,sans-serif", bold:"\"Segoe UI\",system-ui,sans-serif" },
+  round:  { label:"\U0001F511 Round (soft & clear)",    hand:"Quicksand,\"Segoe UI\",sans-serif", title:"Quicksand,\"Segoe UI\",sans-serif", bold:"Quicksand,\"Segoe UI\",sans-serif" }
+};
+function applyFont(){
+  const f = FONTS[settings.font || "doodle"] || FONTS.doodle;
+  const el = document.documentElement;
+  el.style.setProperty("--font-hand", f.hand);
+  el.style.setProperty("--font-title", f.title);
+  el.style.setProperty("--font-bold", f.bold);
+}
+function renderFontPicker(){
+  $("#fontGrid").innerHTML = Object.entries(FONTS).map(([id,f])=>`
+    <button class="theme-opt font-opt ${((settings.font||"doodle")===id)?"on":""}" data-fn="${id}">${f.label}</button>`).join("");
+  $$("#fontGrid [data-fn]").forEach(b=>b.onclick=()=>{
+    settings.font = b.dataset.fn;
+    saveSettings(); applyFont(); renderFontPicker(); syncCatalog();
+    toast("Font style applied to your POS and online store \U0001F524");
+  });
+}
 function renderThemePicker(){
   const sw = { sketchy:["#bfe8cf","#fdf3b3","#f9cdd8"], minimal:["#e8ebe7","#dde8f2","#faf3d3"],
     girly:["#f9cdd8","#ffb3cd","#e8d5f7"], sunset:["#ffd9b8","#ffe3a9","#ff9d7a"],
@@ -1006,7 +1027,7 @@ function renderThemePicker(){
     </button>`).join("");
   $$("#themeGrid [data-th]").forEach(b=>b.onclick=()=>{
     settings.theme = b.dataset.th;
-    saveSettings(); applyTheme(); renderThemePicker(); syncCatalog();
+    saveSettings(); applyTheme(); applyFont(); renderThemePicker(); renderFontPicker(); syncCatalog();
     toast("Theme applied to your POS and online store " + String.fromCodePoint(127912));
   });
 }
@@ -1118,7 +1139,7 @@ function syncCatalog(){
     code: lic.code,
     online: !!settings.onlineStore,
     products: products.filter(p=>p.stock>0).map(p=>({name:p.name, price:p.price, emoji:p.emoji||"📦", stock:p.stock, img:p.img||""})),
-    store: { name:settings.name, logo:settings.logo||"", address:settings.address, phone:settings.phone, theme:settings.theme||"sketchy",
+    store: { name:settings.name, logo:settings.logo||"", address:settings.address, phone:settings.phone, theme:settings.theme||"sketchy", font:settings.font||"doodle",
              gcash:a.gcashNum||"", gcashName:a.gcashName||"", qr:settings.qr||"", deliveryFee:settings.deliveryFee||0 }
   }).catch(()=>{});
 }
@@ -1377,5 +1398,5 @@ if ("serviceWorker" in navigator) {
 /* ---------- init ---------- */
 if(!shiftStart){ shiftStart = Date.now(); DB.set("shiftStart", shiftStart); }
 refreshCats(); renderProducts(); renderCart(); renderDashboard(); renderCashiers();
-loadSettingsForm(); refreshFoot(); applyLogo(); applyQr(); applyTheme(); renderThemePicker(); renderHeldBadge(); renderOnline();
+loadSettingsForm(); refreshFoot(); applyLogo(); applyQr(); applyTheme(); applyFont(); renderThemePicker(); renderFontPicker(); renderHeldBadge(); renderOnline();
 boot();

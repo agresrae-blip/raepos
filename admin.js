@@ -32,7 +32,7 @@ $("#adminLoginForm").addEventListener("submit", async e => {
 });
 function enter(){
   $("#adminLogin").classList.add("hidden"); $("#adminApp").classList.remove("hidden");
-  load(); clearInterval(window._poll); window._poll = setInterval(load, 30000);
+  load(); loadBackups(); clearInterval(window._poll); window._poll = setInterval(load, 30000);
 }
 function logout(){
   token = null; sessionStorage.removeItem("novapos_admin_token");
@@ -41,6 +41,33 @@ function logout(){
   $("#adminPass").value = ""; $("#adminLoginErr").textContent = "";
 }
 $("#adminLogout").onclick = logout;
+/* ---------- automatic backups ---------- */
+async function loadBackups(){
+  try{
+    const r = await api("admin/backups");
+    const rem = $("#backupReminder");
+    if (r.activationsSinceBackup > 0) {
+      rem.textContent = "\u26A0\uFE0F " + r.activationsSinceBackup + " activation(s) happened since your last downloaded backup — click Download Backup Now above!";
+    } else rem.textContent = "";
+    const kb = n => (n/1024).toFixed(1) + " KB";
+    $("#backupsList").innerHTML = r.backups.length ? r.backups.map(b=>`
+      <div class="cashier-row"><span>${b.name}<br><small style="color:#8a7f6a">${kb(b.size)}</small></span>
+        <button class="btn-ghost sm" data-bkdl="${b.name}">\u2B07 Download</button></div>`).join("")
+      : `<p class="muted">No automatic snapshots yet — they appear when a client activates or a license changes.</p>`;
+    $$("#backupsList [data-bkdl]").forEach(btn=>btn.onclick=async ()=>{
+      try{
+        const r2 = await api("admin/backupfile", { name: btn.dataset.bkdl });
+        const blob = new Blob([JSON.stringify(r2.content, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = btn.dataset.bkdl;
+        a.click(); URL.revokeObjectURL(a.href);
+        toast("Snapshot downloaded");
+      }catch(e){ toast(e.message, true); }
+    });
+  }catch(e){ $("#backupsList").innerHTML = "<p class=\"muted\">Could not load backups.</p>"; }
+}
+
 /* admin theme + font pickers (this console only) */
 const ADMIN_THEMES = [
   { id:"sketchy", name:"✏️ Sketchy" }, { id:"minimal", name:"▫️ Minimal" },

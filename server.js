@@ -60,6 +60,10 @@ function statusOf(c) {
   return "active";
 }
 function salesFile(id){ return path.join(DATA_DIR, "sales_" + id + ".json"); }
+function ordersFile(id){ return path.join(DATA_DIR, "orders_" + id + ".json"); }
+function readOrdersFile(id){
+  try { return JSON.parse(fs.readFileSync(ordersFile(id), "utf8")); } catch (e) { return []; }
+}
 function readSales(id){
   try { return JSON.parse(fs.readFileSync(salesFile(id), "utf8")); } catch (e) { return []; }
 }
@@ -72,6 +76,28 @@ function pubCode(c) {
     lastSync: c.lastSync || null, salesCount: s.length,
     salesTotal: s.reduce((a, x) => a + (x.refunded ? 0 : x.total), 0),
     revoked: !!c.revoked, status: statusOf(c) };
+}
+
+/* ---------- automatic server-side backups ---------- */
+function backupDir(){ return path.join(DATA_DIR, "backups"); }
+function autoBackup(reason){
+  try{
+    fs.mkdirSync(backupDir(), { recursive: true });
+    const out = { app:"RaePOS", version:1, exportedAt:new Date().toISOString(), reason: reason||"change",
+      db, sales:{}, orders:{} };
+    db.codes.forEach(c => {
+      const s = readSales(c.id); if (s.length) out.sales[c.id] = s;
+      const o = readOrdersFile(c.id); if (o.length) out.orders[c.id] = o;
+    });
+    const d = new Date();
+    const pad = n => String(n).padStart(2,"0");
+    const name = `backup-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}.json`;
+    fs.writeFileSync(path.join(backupDir(), name), JSON.stringify(out));
+    // keep only the latest 50 snapshots
+    const files = fs.readdirSync(backupDir()).filter(f=>f.startsWith("backup-")).sort();
+    while (files.length > 50) fs.unlinkSync(path.join(backupDir(), files.shift()));
+    return name;
+  }catch(e){ console.error("autoBackup failed:", e.message); return null; }
 }
 
 /* ---------- admin sessions (in-memory, 12h) ---------- */
@@ -107,6 +133,7 @@ async function handleApi(req, res, url) {
     c.phone = String(b.phone || "").trim() || c.phone;
     c.lastSeen = Date.now(); c.checkIns = (c.checkIns || 0) + 1;
     save();
+    if (!c.hadFirstActivation) { c.hadFirstActivation = true; save(); autoBackup("activation:" + c.code); }
     return send(res, 200, { ok: true, license: { code: c.code, type: c.type, expiresAt: c.expiresAt || null, storeName: c.storeName } });
   }
 
@@ -270,7 +297,7 @@ async function handleApi(req, res, url) {
     const code = { id: crypto.randomBytes(8).toString("hex"), code: genCode(), type, days,
       note: String(b.note || "").trim(), createdAt: Date.now(), activatedAt: null,
       expiresAt: null, lastSeen: null, checkIns: 0, revoked: false };
-    db.codes.unshift(code); save();
+    db.codes.unshift(code); save(); autoBackup("code-created");
     return send(res, 200, { ok: true, code: pubCode(code) });
   }
 
@@ -292,7 +319,7 @@ async function handleApi(req, res, url) {
     }
     else if (b.action === "make_lifetime") { c.type = "lifetime"; c.expiresAt = null; }
     else return send(res, 400, { ok: false, error: "Unknown action" });
-    save();
+    save(); autoBackup("code-" + b.action);
     return send(res, 200, { ok: true, code: pubCode(c) });
   }
 
@@ -312,7 +339,32 @@ async function handleApi(req, res, url) {
       const s = readSales(c.id); if (s.length) out.sales[c.id] = s;
       const o = readOrders(c.id); if (o.length) out.orders[c.id] = o;
     });
+    db.lastBackupAt = Date.now(); save();
     return send(res, 200, out);
+  }
+
+  /* list automatic snapshots */
+  if (route === "/api/admin/backups" && req.method === "GET") {
+    let files = [];
+    try { files = fs.readdirSync(backupDir()).filter(f=>f.startsWith("backup-")).sort().reverse(); } catch(e){}
+    const list = files.map(f => {
+      let st = { size: 0 };
+      try { st = fs.statSync(path.join(backupDir(), f)); } catch(e){}
+      return { name: f, size: st.size, at: st.mtimeMs || 0 };
+    });
+    return send(res, 200, { ok: true, backups: list.slice(0, 50),
+      lastBackupAt: db.lastBackupAt || null,
+      activationsSinceBackup: db.codes.filter(c => c.activatedAt && (!db.lastBackupAt || c.activatedAt > db.lastBackupAt)).length });
+  }
+
+  /* download one automatic snapshot */
+  if (route === "/api/admin/backupfile" && req.method === "POST") {
+    const b = await readBody(req);
+    const name = String(b.name || "");
+    if (!/^backup-[\w.-]+\.json$/.test(name)) return send(res, 400, { ok: false, error: "Bad file name" });
+    const fp = path.join(backupDir(), name);
+    if (!fs.existsSync(fp)) return send(res, 404, { ok: false, error: "Snapshot not found" });
+    return send(res, 200, { ok: true, name, content: JSON.parse(fs.readFileSync(fp, "utf8")) });
   }
 
   /* restore a backup (overwrites everything) */

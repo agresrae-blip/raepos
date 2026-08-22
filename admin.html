@@ -91,6 +91,12 @@ var af=localStorage.getItem("raepos_admin_font");if(af){var F={doodle:['"Patrick
           <input type="file" id="restoreFile" accept=".json,application/json">
           <button id="restoreBtn" class="btn-danger btn-block" style="margin-top:8px">⚠️ Restore (overwrites server data)</button>
         </div>
+        <div class="panel" id="autoBackupPanel">
+          <h3>🤖 Automatic Backups</h3>
+          <p class="muted">The server saves a snapshot automatically every time a client activates or a license changes. Download one anytime — this is your safety net.</p>
+          <p id="backupReminder" class="muted" style="color:#b3403f"></p>
+          <div id="backupsList" style="max-height:260px;overflow:auto">Loading…</div>
+        </div>
         <div class="panel">
           <h3>🎨 Admin Theme</h3>
           <p class="muted">Your console's personal look (does not affect clients).</p>

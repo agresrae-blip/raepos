@@ -1,0 +1,8 @@
+{
+  "name": "raepos",
+  "version": "1.0.0",
+  "start": "node server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

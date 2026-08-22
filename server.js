@@ -170,6 +170,20 @@ async function handleApi(req, res, url) {
     return send(res, 200, { ok: true });
   }
 
+  // public: track a single order (must be checked BEFORE the storefront route)
+  const track = url.pathname.match(/^\/api\/shop\/([A-Za-z0-9-]+)\/order\/([A-Za-z0-9]+)$/);
+  if (track && req.method === "GET") {
+    const c = db.codes.find(x => x.code === decodeURIComponent(track[1]).trim().toUpperCase());
+    if (!c) return send(res, 404, { ok: false, error: "Store not found." });
+    const o = readOrders(c.id).find(x => x.id === track[2].toUpperCase());
+    if (!o) return send(res, 404, { ok: false, error: "Order not found." });
+    const st = c.catalog ? c.catalog.store : {};
+    return send(res, 200, { ok: true,
+      store: { name: st.name || "Store", phone: st.phone || "", logo: st.logo || "" },
+      order: { id: o.id, ts: o.ts, items: o.items, itemsTotal: o.itemsTotal, fee: o.fee,
+               total: o.total, payment: o.payment, status: o.status, customerName: o.customer.name } });
+  }
+
   // public: storefront data
   if (url.pathname.startsWith("/api/shop/") && req.method === "GET") {
     const code = decodeURIComponent(url.pathname.split("/")[3] || "").trim().toUpperCase();

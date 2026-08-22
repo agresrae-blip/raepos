@@ -1138,6 +1138,7 @@ function renderOrders(){
       <div class="order-items">${o.items.map(i=>`${i.qty}× ${i.name} — ${peso(i.qty*i.price)}`).join("<br>")}
         <br><b>Total: ${peso(o.total)}${o.fee?` (incl. ${peso(o.fee)} delivery)`: ""} · ${o.payment==="GCash"?"🔵 GCash"+(o.ref?" ref "+o.ref:""):"💵 COD"}</b></div>
       <div class="order-addr">👤 ${o.customer.name} · 📞 ${o.customer.phone}<br>📍 ${o.customer.address}${o.customer.notes?"<br>📝 "+o.customer.notes:""}</div>
+      <button class="btn-ghost sm" data-track="${o.id}">🔗 Copy Track Link</button>
       ${o.status==="new"?`
         <button class="btn-primary sm" data-ord="accept" data-oid="${o.id}">✔ Accept</button>
         <button class="btn-danger sm" data-ord="reject" data-oid="${o.id}">✖ Reject</button>`:""}
@@ -1146,6 +1147,11 @@ function renderOrders(){
     </div>`).join("")
     : `<p class="muted">No online orders yet.</p>`;
   $$("#ordersList [data-ord]").forEach(b=>b.onclick=()=>orderAction(b.dataset.oid, b.dataset.ord));
+  $$("#ordersList [data-track]").forEach(b=>b.onclick=()=>{
+    const url = shopLink() + "/order/" + b.dataset.track;
+    if(!url.includes("/shop/")) return toast("No server link yet", true);
+    navigator.clipboard.writeText(url).then(()=>toast("Track link copied — send it to " + b.dataset.track + " 🔗"));
+  });
 }
 async function orderAction(oid, action){
   const lic = DB.get("license", null);

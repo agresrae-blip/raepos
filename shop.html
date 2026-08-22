@@ -83,11 +83,40 @@ input:focus,textarea:focus{border-color:#7c5cff}
 <script>
 const $ = s => document.querySelector(s);
 const peso = n => "₱" + (Math.round(n*100)/100).toLocaleString("en-PH",{minimumFractionDigits:2});
-const code = location.pathname.split("/")[2] || "";
+const pathParts = location.pathname.split("/");
+const code = pathParts[2] || "";
+const TRACK_MODE = pathParts[3] === "order" && pathParts[4];
 let store = null, items = [], cart = {}, pay = "COD";
+
+function trackPage(){
+  const oid = pathParts[4].toUpperCase();
+  const render = ()=>{
+    fetch("/api/shop/" + encodeURIComponent(code) + "/order/" + oid).then(r=>r.json()).then(d=>{
+      if(!d.ok){ $("#content").innerHTML = '<div class="err"><h2>Order not found</h2>Check your order link.</div>'; return; }
+      const S = { new:["🆕","Waiting for the store to confirm"], preparing:["👨‍🍳","Being prepared"], delivering:["🛵","On its way to you!"], done:["✅","Delivered — enjoy!"], rejected:["❌","Sorry — the store rejected this order"] }[d.order.status] || ["⏳", d.order.status];
+      $("#head").innerHTML = (d.store.logo?`<img src="${d.store.logo}" alt="logo">`:"") + `<h1>${d.store.name}</h1><div class="sub">Order tracking</div>`;
+      $("#content").innerHTML = `
+        <div class="err" style="background:rgba(0,212,255,.06);border-color:rgba(0,212,255,.35);color:inherit">
+          <div style="font-size:3rem">${S[0]}</div>
+          <h2 style="color:#fff">${S[1]}</h2>
+          <p style="color:#8b93b5">Order <b style="color:#fff">${d.order.id}</b> · ${new Date(d.order.ts).toLocaleString("en-PH")}</p>
+        </div>
+        <div class="sheet" style="position:static;max-width:100%;margin-top:14px">
+          ${d.order.items.map(i=>`<div class="ci"><span>${i.qty}× ${i.name}</span><span>${peso(i.qty*i.price)}</span></div>`).join("")}
+          ${d.order.fee?`<div class="ci"><span style="color:#8b93b5">Delivery fee</span><span>${peso(d.order.fee)}</span></div>`:""}
+          <div class="totrow"><span>Total (${d.order.payment==="GCash"?"GCash":"COD"})</span><span>${peso(d.order.total)}</span></div>
+          <p style="color:#8b93b5;font-size:.75rem;text-align:center">This page updates automatically — refresh anytime.</p>
+        </div>`;
+    }).catch(()=>{});
+  };
+  render();
+  setInterval(render, 20000);
+}
+if (TRACK_MODE) trackPage();
 
 fetch("/api/shop/" + encodeURIComponent(code)).then(r=>r.json()).then(d=>{
   if(!d.ok){ $("#offBox").classList.remove("hidden"); return; }
+  if (TRACK_MODE) return; // tracking page has its own header
   store = d.store; items = d.products;
   $("#head").innerHTML = (store.logo?`<img src="${store.logo}" alt="logo">`:"") +
     `<h1>${store.name}</h1><div class="sub">Order online — we deliver!${store.phone?" · 📞 "+store.phone:""}</div>`;
@@ -161,10 +190,14 @@ async function placeOrder(){
     closeCart();
     $("#content").classList.add("hidden");
     const d = $("#doneBox"); d.classList.remove("hidden");
+    const trackUrl = location.origin + "/shop/" + code + "/order/" + r.orderId;
     d.innerHTML = `<div class="big">✅</div><h2>Order placed!</h2>
       <p>Order <b>${r.orderId}</b> — total <b>${peso(r.total)}</b><br>
       ${pay==="COD"?"Pay cash on delivery.":"Pay via GCash now if you haven't yet."}<br>
-      The store will confirm your order soon. Thank you! 💙</p>`;
+      The store will confirm your order soon. Thank you! 💙</p>
+      <div class="gnote" style="margin-top:14px;text-align:left"><b>🔗 Track your order here</b> (save this!):<br>
+      <input id="trackUrlBox" readonly value="${trackUrl}" style="margin-top:6px;font-size:.75rem">
+      <button class="btn" style="margin-top:6px;padding:10px" onclick="navigator.clipboard.writeText('${trackUrl}').then(()=>this.textContent='Copied!')">Copy link</button></div>`;
   }catch(e){
     $("#formErr").textContent = "Connection problem — please try again.";
     btn.disabled = false; btn.textContent = "Place Order ▸";

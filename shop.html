@@ -52,14 +52,22 @@ input:focus,textarea:focus{background:var(--yellow)}
 .done h2{font-family:"Gochi Hand",cursive;margin:12px 0 6px}
 .done p{color:var(--mut);font-size:.95rem}
 .totrow{display:flex;justify-content:space-between;font-family:"Gochi Hand",cursive;font-size:1.3rem;margin:12px 0;background:var(--mint);border:2.5px solid var(--line);border-radius:var(--wob2);padding:8px 14px}
+.imgwrap{height:150px;display:flex;align-items:center;justify-content:center;background:#fff;border:2px solid var(--line);border-radius:12px;margin-bottom:6px;overflow:hidden;cursor:zoom-in}
+.imgwrap img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.imgwrap .em{font-size:2.2rem;cursor:pointer}
+#lightbox{position:fixed;inset:0;background:rgba(20,17,14,.92);z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;cursor:zoom-out}
+#lightbox img{max-width:94vw;max-height:72vh;object-fit:contain;background:#fff;border:3px solid #fff;border-radius:14px}
+#lightbox .cap{color:#fff;font-family:var(--font-title,"Gochi Hand",cursive);font-size:1.3rem;margin-top:12px;text-align:center}
+#lightbox .hint{color:#b9ad97;font-size:.8rem;margin-top:6px}
 .chatFab{position:fixed;bottom:96px;right:14px;z-index:6;border:2.5px solid var(--line);background:var(--blue);color:var(--ink);border-radius:var(--wob1);padding:9px 16px;font-family:var(--font-title,"Gochi Hand",cursive);font-size:1rem;cursor:pointer;box-shadow:2px 2px 0 var(--shadow);text-decoration:none}
 .chatFab.hide{display:none}
 .themeFab{position:fixed;top:14px;right:14px;z-index:6;border:2.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:var(--wob1);padding:7px 14px;font-family:"Gochi Hand",cursive;font-size:1rem;cursor:pointer;box-shadow:2px 2px 0 var(--shadow)}
-.hidden{display:none}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
 <button class="themeFab" onclick="toggleTheme()">🌔</button>
+<div id="lightbox" class="hidden" onclick="this.classList.add('hidden')"></div>
 <a class="chatFab hide" id="chatFab" href="#" target="_blank" rel="noopener">💬 Chat / Feedback</a>
 <div class="wrap">
   <div class="head" id="head"></div>
@@ -99,6 +107,11 @@ input:focus,textarea:focus{background:var(--yellow)}
 
 <script>
 const $ = s => document.querySelector(s);
+function showPic(src, name, price){
+  const lb = document.getElementById("lightbox");
+  lb.innerHTML = '<img src="' + src + '" alt=""><div class="cap">' + name + ' — ' + peso(price) + '</div><div class="hint">tap anywhere to close</div>';
+  lb.classList.remove("hidden");
+}
 function toggleTheme(){
   const el = document.documentElement;
   const next = el.dataset.mode === "dark" ? "light" : "dark";
@@ -157,11 +170,15 @@ fetch("/api/shop/" + encodeURIComponent(code)).then(r=>r.json()).then(d=>{
 }).catch(()=>{ $("#offBox").classList.remove("hidden"); });
 
 function renderGrid(){
-  $("#grid").innerHTML = items.map(p=>`
-    <div class="item" onclick="add('${p.name.replace(/'/g,"\\'")}')">
-      ${p.img?`<img src="${p.img}" alt="" style="width:100%;height:110px;object-fit:cover;border-radius:12px">`:`<div class="em">${p.emoji}</div>`}<h4>${p.name}</h4>
+  $("#grid").innerHTML = items.map(p=>{
+    const nm = p.name.replace(/'/g,"\\'");
+    const visual = p.img
+      ? `<div class="imgwrap" onclick="event.stopPropagation();showPic('${p.img}','${nm}',${p.price})"><img src="${p.img}" alt="${nm}"></div>`
+      : `<div class="imgwrap" onclick="event.stopPropagation();"><span class="em">${p.emoji}</span></div>`;
+    return `<div class="item" onclick="add('${nm}')">
+      ${visual}<h4>${p.name}</h4>
       <div class="p">${peso(p.price)}</div><div class="s">${p.stock} available</div>
-    </div>`).join("");
+    </div>`;}).join("");
 }
 function add(name){
   const p = items.find(x=>x.name===name);

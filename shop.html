@@ -52,12 +52,15 @@ input:focus,textarea:focus{background:var(--yellow)}
 .done h2{font-family:"Gochi Hand",cursive;margin:12px 0 6px}
 .done p{color:var(--mut);font-size:.95rem}
 .totrow{display:flex;justify-content:space-between;font-family:"Gochi Hand",cursive;font-size:1.3rem;margin:12px 0;background:var(--mint);border:2.5px solid var(--line);border-radius:var(--wob2);padding:8px 14px}
+.chatFab{position:fixed;bottom:96px;right:14px;z-index:6;border:2.5px solid var(--line);background:var(--blue);color:var(--ink);border-radius:var(--wob1);padding:9px 16px;font-family:var(--font-title,"Gochi Hand",cursive);font-size:1rem;cursor:pointer;box-shadow:2px 2px 0 var(--shadow);text-decoration:none}
+.chatFab.hide{display:none}
 .themeFab{position:fixed;top:14px;right:14px;z-index:6;border:2.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:var(--wob1);padding:7px 14px;font-family:"Gochi Hand",cursive;font-size:1rem;cursor:pointer;box-shadow:2px 2px 0 var(--shadow)}
 .hidden{display:none}
 </style>
 </head>
 <body>
 <button class="themeFab" onclick="toggleTheme()">🌔</button>
+<a class="chatFab hide" id="chatFab" href="#" target="_blank" rel="noopener">💬 Chat / Feedback</a>
 <div class="wrap">
   <div class="head" id="head"></div>
   <div id="content">
@@ -137,6 +140,11 @@ if (TRACK_MODE) trackPage();
 fetch("/api/shop/" + encodeURIComponent(code)).then(r=>r.json()).then(d=>{
   if(!d.ok){ $("#offBox").classList.remove("hidden"); return; }
     if (d.store.theme) document.documentElement.dataset.theme = d.store.theme;
+  const cf = document.getElementById("chatFab");
+  if (cf){
+    if (d.store.messenger){ cf.href = d.store.messenger; cf.classList.remove("hide"); }
+    else if (d.store.phone){ cf.href = "tel:" + d.store.phone.replace(/\s/g,""); cf.textContent = "📞 Call Us"; cf.classList.remove("hide"); }
+  }
   const F = { doodle:["\"Patrick Hand\",cursive","\"Gochi Hand\",cursive"],
               clean:["\"Segoe UI\",system-ui,sans-serif","\"Segoe UI\",system-ui,sans-serif"],
               round:["Quicksand,\"Segoe UI\",sans-serif","Quicksand,\"Segoe UI\",sans-serif"] }[d.store.font || "doodle"] || null;

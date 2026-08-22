@@ -349,7 +349,10 @@
     </div>
     <div class="two">
       <div><label>Category *</label><input id="pmCat" list="catList"><datalist id="catList"></datalist></div>
-      <div><label>Barcode / SKU</label><input id="pmBarcode"></div>
+      <div>
+        <label>Barcode / SKU</label><input id="pmBarcode">
+        <button type="button" id="scanBarcodeBtn" class="btn-ghost sm" style="margin-top:6px">📷 Scan Barcode (camera)</button>
+      </div>
     </div>
     <div class="two">
       <div><label>Selling Price (₱) *</label><input id="pmPrice" type="number" min="0" step="0.01"></div>
@@ -468,6 +471,16 @@
       <button id="zPrintBtn" class="btn-primary">🖨 Print Z-Report</button>
       <button id="zCloseShiftBtn" class="btn-danger">Close Shift ▸</button>
     </div>
+  </div>
+</div>
+
+<!-- BARCODE SCANNER MODAL -->
+<div id="scanModal" class="modal hidden">
+  <div class="modal-card">
+    <h3>📷 Scan Barcode</h3>
+    <div id="scanReader" style="width:100%;border-radius:14px;overflow:hidden"></div>
+    <p class="muted sm-note" style="margin-top:8px">Point the camera at the barcode — it fills in automatically. You can also type it by hand.</p>
+    <div class="modal-actions"><button class="btn-primary" data-close>Cancel</button></div>
   </div>
 </div>
 

@@ -1048,9 +1048,41 @@ $("#addCashierBtn").onclick = ()=>{
   toast("Cashier added — they can now log in with their PIN");
 };
 
+/* ---------- barcode camera scanner ---------- */
+let qrScanner = null, qrLibLoading = null;
+function stopScanner(){
+  if(qrScanner){ try { qrScanner.stop().then(()=>qrScanner.clear()).catch(()=>{}); } catch(e){} qrScanner = null; }
+}
+$("#scanBarcodeBtn").onclick = async ()=>{
+  openModal("#scanModal");
+  try{
+    if(!window.Html5Qrcode){
+      if(!qrLibLoading){
+        qrLibLoading = new Promise((res, rej)=>{
+          const s = document.createElement("script");
+          s.src = "https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js";
+          s.onload = res; s.onerror = rej; document.head.appendChild(s);
+        });
+      }
+      await qrLibLoading;
+    }
+    qrScanner = new Html5Qrcode("scanReader");
+    await qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } },
+      decoded => {
+        $("#pmBarcode").value = decoded;
+        stopScanner(); closeModals();
+        toast("Barcode captured: " + decoded);
+      },
+      ()=>{/* no code in frame yet */});
+  }catch(e){
+    $("#scanReader").innerHTML = "";
+    toast("Camera not available — type the barcode instead", true);
+  }
+};
+
 /* ---------- modals ---------- */
 function openModal(sel){ $(sel).classList.remove("hidden"); }
-function closeModals(){ $$(".modal").forEach(m=>m.classList.add("hidden")); }
+function closeModals(){ stopScanner(); $$(".modal").forEach(m=>m.classList.add("hidden")); }
 $$("[data-close]").forEach(b=>b.onclick=closeModals);
 $$(".modal").forEach(m=>m.addEventListener("click", e=>{ if(e.target===m) closeModals(); }));
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModals(); });

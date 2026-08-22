@@ -1216,9 +1216,20 @@ function renderOrders(){
         <button class="btn-danger sm" data-ord="reject" data-oid="${o.id}">✖ Reject</button>`:""}
       ${o.status==="preparing"?`<button class="btn-primary sm" data-ord="deliver" data-oid="${o.id}">🛵 Out for Delivery</button>`:""}
       ${o.status==="delivering"?`<button class="btn-primary sm" data-ord="complete" data-oid="${o.id}">✅ Delivered &amp; Paid</button>`:""}
+      ${(o.status==="done"||o.status==="rejected")?`<button class="btn-danger sm" data-delord="${o.id}">🗑</button>`:""}
     </div>`).join("")
     : `<p class="muted">No online orders yet.</p>`;
   $$("#ordersList [data-ord]").forEach(b=>b.onclick=()=>orderAction(b.dataset.oid, b.dataset.ord));
+  $$("#ordersList [data-delord]").forEach(b=>b.onclick=async ()=>{
+    if(currentUser().role !== "owner" && !await ownerGate("Deleting a delivered order requires the OWNER PIN")) return;
+    if(!confirm("Delete this delivered order from the list? The recorded sale is NOT affected.")) return;
+    try{
+      const r = await licApi("orderupdate", { code: DB.get("license").code, orderId: b.dataset.delord, action: "delete_order" });
+      if(!r.ok) return toast(r.error || "Delete failed", true);
+      toast("Order deleted from the list");
+      pollOrders(true);
+    }catch(e){ toast("Connection problem", true); }
+  });
   $$("#ordersList [data-track]").forEach(b=>b.onclick=()=>{
     const url = shopLink() + "/order/" + b.dataset.track;
     if(!url.includes("/shop/")) return toast("No server link yet", true);

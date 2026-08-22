@@ -17,10 +17,46 @@ const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, "data");
 const DATA_FILE = path.join(DATA_DIR, "licenses.json");
 
-/* ---------- storage ---------- */
-let db = { adminPassword: process.env.ADMIN_PASSWORD || "admin123", codes: [] };
+/* ---------- storage with self-healing auto-restore ---------- */
+const FRESH_DB = () => ({ adminPassword: process.env.ADMIN_PASSWORD || "admin123", codes: [] });
+
+function tryRestoreFromSnapshot(reason){
+  // returns restored db or null
+  try{
+    const files = fs.readdirSync(backupDir()).filter(f => f.startsWith("backup-")).sort().reverse();
+    for (const f of files){
+      try{
+        const snap = JSON.parse(fs.readFileSync(path.join(backupDir(), f), "utf8"));
+        if (snap && snap.db && Array.isArray(snap.db.codes) && snap.db.codes.length){
+          console.error("[SELF-HEAL] " + reason + " -> restoring from snapshot: " + f);
+          fs.mkdirSync(DATA_DIR, { recursive: true });
+          fs.writeFileSync(DATA_FILE, JSON.stringify(snap.db, null, 2));
+          Object.entries(snap.sales || {}).forEach(([id, arr]) => fs.writeFileSync(salesFile(id), JSON.stringify(arr)));
+          Object.entries(snap.orders || {}).forEach(([id, arr]) => fs.writeFileSync(ordersFile(id), JSON.stringify(arr)));
+          return Object.assign(FRESH_DB(), snap.db);
+        }
+      }catch(e){ /* try next snapshot */ }
+    }
+  }catch(e){ /* no backups dir */ }
+  return null;
+}
+
+let db = FRESH_DB();
 if (fs.existsSync(DATA_FILE)) {
-  try { db = Object.assign(db, JSON.parse(fs.readFileSync(DATA_FILE, "utf8"))); } catch (e) { console.error("Bad data file, starting fresh:", e.message); }
+  let parsed = null;
+  try { parsed = JSON.parse(fs.readFileSync(DATA_FILE, "utf8")); }
+  catch(e){ parsed = tryRestoreFromSnapshot("licenses.json is corrupted"); }
+  if (parsed){
+    db = Object.assign(db, parsed);
+    // file parsed but has ZERO codes while snapshots contain codes -> data was wiped, heal it
+    if (!Array.isArray(db.codes) || db.codes.length === 0){
+      const healed = tryRestoreFromSnapshot("licenses.json is empty");
+      if (healed) db = healed;
+    }
+  }
+} else {
+  const healed = tryRestoreFromSnapshot("licenses.json is missing");
+  if (healed) db = healed;
 }
 function save() { fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(DATA_FILE, JSON.stringify(db, null, 2)); }
 save();

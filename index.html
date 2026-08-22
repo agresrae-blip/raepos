@@ -80,6 +80,7 @@
   <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="brand"><span class="brand-mark">◆</span><span class="brand-name">Rae<b>POS</b></span></div>
+    <button id="sideToggle" title="Expand / collapse menu">»</button>
     <nav id="nav">
       <button class="nav-btn active" data-page="dashboard">📊 <span>Dashboard</span></button>
       <button class="nav-btn" data-page="pos">🛒 <span>Register</span></button>
@@ -96,9 +97,9 @@
         <small>Cashier</small><strong id="footCashier">—</strong>
         <small>Shift started</small><strong id="footShift">—</strong>
       </div>
-      <button id="themeBtn" class="btn-block sm">🌗</button>
-      <button id="zBtn" class="btn-ghost btn-block" style="margin-bottom:8px" title="Close Shift (Z-Reading)">📊</button>
-      <button id="logoutBtn" class="btn-ghost btn-block" title="Lock Register">🔒</button>
+      <button id="themeBtn" class="btn-block sm">🌗 <span class="lbl">Light / Dark</span></button>
+      <button id="zBtn" class="btn-ghost btn-block" style="margin-bottom:8px" title="Close Shift (Z-Reading)">📊 <span class="lbl">Close Shift (Z)</span></button>
+      <button id="logoutBtn" class="btn-ghost btn-block" title="Lock Register">🔒 <span class="lbl">Lock</span></button>
     </div>
   </aside>
 

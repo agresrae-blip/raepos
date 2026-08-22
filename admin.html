@@ -32,15 +32,16 @@ var af=localStorage.getItem("raepos_admin_font");if(af){var F={doodle:['"Patrick
 <div id="adminApp" class="app hidden">
   <aside class="sidebar">
     <div class="brand"><span class="brand-mark">🛡️</span><span class="brand-name">Rae<b>Admin</b></span></div>
+    <button id="sideToggle" title="Expand / collapse menu">»</button>
     <nav id="nav">
       <button class="nav-btn active" data-page="licenses">🔑 <span>Licenses</span></button>
       <button class="nav-btn" data-page="account">👤 <span>Account</span></button>
       <button class="nav-btn" onclick="window.open('/','_blank')">🛒 <span>Open POS</span></button>
     </nav>
     <div class="sidebar-foot">
-      <button id="themeBtn" class="btn-block sm" style="margin-bottom:8px">🌗</button>
+      <button id="themeBtn" class="btn-block sm" style="margin-bottom:8px">🌗 <span class="lbl">Light / Dark</span></button>
       <div class="shift-info"><small>Monitoring</small><strong id="footRefresh">auto every 30s</strong></div>
-      <button id="adminLogout" class="btn-ghost btn-block" title="Log Out">🚪</button>
+      <button id="adminLogout" class="btn-ghost btn-block" title="Log Out">🚪 <span class="lbl">Log Out</span></button>
     </div>
   </aside>
 

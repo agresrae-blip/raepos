@@ -41,6 +41,12 @@ function logout(){
   $("#adminPass").value = ""; $("#adminLoginErr").textContent = "";
 }
 $("#adminLogout").onclick = logout;
+try{ if(localStorage.getItem("raepos_side") === "open") document.querySelector(".sidebar").classList.add("open"); }catch(e){}
+$("#sideToggle").onclick = ()=>{
+  const sb = document.querySelector(".sidebar");
+  sb.classList.toggle("open");
+  try{ localStorage.setItem("raepos_side", sb.classList.contains("open") ? "open" : "collapsed"); }catch(e){}
+};
 /* ---------- automatic backups ---------- */
 async function loadBackups(){
   try{

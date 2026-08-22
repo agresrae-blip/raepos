@@ -83,6 +83,7 @@
       <button class="nav-btn active" data-page="dashboard">📊 <span>Dashboard</span></button>
       <button class="nav-btn" data-page="pos">🛒 <span>Register</span></button>
       <button class="nav-btn" data-page="inventory">📦 <span>Inventory</span><em id="lowStockBadge" class="badge hidden"></em></button>
+      <button class="nav-btn" data-page="stockin">📥 <span>Stock In</span></button>
       <button class="nav-btn" data-page="sales">🧾 <span>Sales</span></button>
       <button class="nav-btn" data-page="online">🌐 <span>Online</span><em id="ordersBadge" class="badge hidden"></em></button>
       <button class="nav-btn" data-page="reports">📈 <span>Reports</span></button>
@@ -186,6 +187,37 @@
           <tbody id="invBody"></tbody>
         </table>
       </div>
+    </section>
+
+    <!-- STOCK IN -->
+    <section id="page-stockin" class="page">
+      <header class="page-head"><h2>Stock In (Receiving)</h2></header>
+      <div class="stat-grid">
+        <div class="stat-card c1"><small>Total Owed to Suppliers</small><strong id="siOwed">&#8369;0.00</strong><span id="siSuppCount">0 suppliers</span></div>
+        <div class="stat-card c3"><small>Stock-Ins Recorded</small><strong id="siCount">0</strong><span>all time</span></div>
+      </div>
+      <div class="dash-cols">
+        <div class="panel">
+          <h3>📥 Record Delivery</h3>
+          <label>Supplier</label><input id="siSupplier" list="suppList" placeholder="e.g. Mang Ben Merchandise"><datalist id="suppList"></datalist>
+          <label>Product (from your inventory) *</label><input id="siProduct" list="prodList2" placeholder="Choose product"><datalist id="prodList2"></datalist>
+          <div class="two">
+            <div><label>Quantity *</label><input id="siQty" type="number" min="1" step="1"></div>
+            <div><label>Unit Cost (&#8369;)</label><input id="siCost" type="number" min="0" step="0.01"></div>
+          </div>
+          <div class="two">
+            <div><label>Total (auto)</label><input id="siTotal" readonly></div>
+            <div><label>Paid Now (&#8369;)</label><input id="siPaid" type="number" min="0" step="0.01" value="0"></div>
+          </div>
+          <button id="siSaveBtn" class="btn-primary btn-block">Save Stock-In</button>
+          <p class="muted sm-note">Adds stock to the product, updates its cost (for true profit reports), and records the supplier balance.</p>
+        </div>
+        <div class="panel">
+          <h3>🚚 Suppliers &amp; Balances</h3>
+          <div id="suppBody"></div>
+        </div>
+      </div>
+      <div class="panel"><h3>📜 Recent Stock-Ins</h3><div id="siHistory"></div></div>
     </section>
 
     <!-- SALES HISTORY -->
@@ -420,6 +452,7 @@
     <div id="receipt" class="receipt print-area"></div>
     <div class="modal-actions">
       <button class="btn-ghost" data-close>Close</button>
+      <button id="btPrintBtn" class="btn-ghost">📶 Bluetooth</button>
       <button id="printBtn" class="btn-primary">🖨 Print Receipt</button>
     </div>
   </div>

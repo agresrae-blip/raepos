@@ -19,6 +19,10 @@ let payMethod = null; // selected at checkout
 let editingId = null;
 let shiftStart = DB.get("shiftStart", null);
 let customers = DB.get("customers", []);
+let suppliers = DB.get("suppliers", []);
+let stockins  = DB.get("stockins", []);
+const saveSuppliers = () => DB.set("suppliers", suppliers);
+const saveStockins  = () => DB.set("stockins", stockins);
 let held      = DB.get("held", []);       // parked orders
 let shifts    = DB.get("shifts", []);
 if(!Array.isArray(settings.cashiers)) settings.cashiers = [];
@@ -240,14 +244,15 @@ $("#logoutBtn").onclick = ()=>{ sessionStorage.removeItem("novapos_unlocked"); l
 /* ---------- navigation ---------- */
 $$("#nav .nav-btn").forEach(b => b.onclick = async ()=>{
   // Settings is owner-only: cashiers must authorize with the owner PIN
-  if(b.dataset.page==="settings" && currentUser().role !== "owner"){
-    if(!await ownerGate("Settings is for the OWNER only — enter the owner PIN")) return;
+  if((b.dataset.page==="settings" || b.dataset.page==="stockin") && currentUser().role !== "owner"){
+    if(!await ownerGate((b.dataset.page==="stockin" ? "Stock In is for the OWNER only" : "Settings is for the OWNER only") + " — enter the owner PIN")) return;
   }
   $$("#nav .nav-btn").forEach(x=>x.classList.remove("active")); b.classList.add("active");
   $$(".page").forEach(p=>p.classList.remove("active"));
   $("#page-"+b.dataset.page).classList.add("active");
   if(b.dataset.page==="dashboard") renderDashboard();
   if(b.dataset.page==="inventory") renderInventory();
+  if(b.dataset.page==="stockin") renderStockIn();
   if(b.dataset.page==="sales") renderSales();
   if(b.dataset.page==="online"){ renderOnline(); pollOrders(true); }
   if(b.dataset.page==="reports") renderReports();
@@ -533,9 +538,84 @@ function showReceipt(s){
     </table>
     <hr>
     <div class="rc">${settings.footer}<br>— ${settings.name} —</div>`;
+  lastShownSale = s;
   openModal("#receiptModal");
 }
+let lastShownSale = null;
 $("#printBtn").onclick = ()=>window.print();
+
+/* ---------- Bluetooth thermal printer (ESC/POS, Android Chrome) ---------- */
+const ESCPOS = {
+  txt: s => Array.from(new TextEncoder().encode(s)),
+  init: () => [0x1B, 0x40],
+  center: () => [0x1B, 0x61, 0x01],
+  left: () => [0x1B, 0x61, 0x00],
+  big: on => [0x1B, 0x21, on ? 0x30 : 0x00],
+  feed: n => [0x0A, ...Array(n-1).fill(0x0A)],
+  cut: () => [0x1D, 0x56, 0x00]
+};
+function receiptLines(s){
+  const W = 32;
+  const P = n => "P" + (Math.round(n*100)/100).toFixed(2);
+  const row = (l, r) => { l = String(l); r = String(r); return l.slice(0, W - r.length - 1) + " ".repeat(Math.max(1, W - l.length - r.length)) + r; };
+  const rule = () => "-".repeat(W);
+  const L = [];
+  L.push({ c: true, big: true, t: settings.name });
+  if(settings.address) L.push({ c: true, t: settings.address });
+  if(settings.phone) L.push({ c: true, t: settings.phone });
+  L.push({ t: rule() });
+  L.push({ t: "Receipt: " + s.receipt });
+  L.push({ t: new Date(s.date).toLocaleString("en-PH") });
+  L.push({ t: "Cashier: " + s.cashier });
+  if(s.online && s.customer){ L.push({ t: "DELIVER TO: " + s.customer }); if(s.delivery && s.delivery.address) L.push({ t: s.delivery.address.slice(0, W) }); }
+  L.push({ t: rule() });
+  s.items.forEach(i => {
+    L.push({ t: i.name.slice(0, W) });
+    L.push({ t: row("  " + i.qty + " x " + P(i.price), P(i.qty * i.price)) });
+  });
+  L.push({ t: rule() });
+  L.push({ t: row("SUBTOTAL", P(s.subtotal)) });
+  if(s.deliveryFee) L.push({ t: row("DELIVERY FEE", P(s.deliveryFee)) });
+  if(s.discount) L.push({ t: row("DISCOUNT " + s.discountPct + "%", "-" + P(s.discount)) });
+  if(s.vat) L.push({ t: row("VAT", P(s.vat)) });
+  L.push({ t: row("TOTAL", P(s.total)), big: true });
+  L.push({ t: row(s.payment, P(s.tendered)) });
+  if(s.payment === "Cash") L.push({ t: row("CHANGE", P(s.change)) });
+  else L.push({ t: "Ref#: " + (s.ref || "-") });
+  L.push({ t: rule() });
+  if(settings.footer) L.push({ c: true, t: settings.footer.slice(0, W) });
+  L.push({ c: true, t: "** " + settings.name + " **" });
+  if(s.refunded) L.push({ c: true, big: true, t: "* REFUNDED *" });
+  return L;
+}
+$("#btPrintBtn").onclick = async ()=>{
+  const s = lastShownSale;
+  if(!s) return toast("Open a receipt first", true);
+  if(!navigator.bluetooth) return toast("Bluetooth printing works on Android Chrome. On other devices use the Print button.", true);
+  try{
+    toast("Pick your thermal printer...");
+    const device = await navigator.bluetooth.requestDevice({ filters: [{ services: [0x18F0] }], optionalServices: [0x18F0] });
+    toast("Connecting to " + (device.name || "printer") + "...");
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService(0x18F0);
+    const ch = await service.getCharacteristic(0x2AF1);
+    let bytes = ESCPOS.init();
+    receiptLines(s).forEach(ln => {
+      bytes = bytes.concat(ln.c ? ESCPOS.center() : ESCPOS.left());
+      if(ln.big) bytes = bytes.concat(ESCPOS.big(true));
+      bytes = bytes.concat(ESCPOS.txt(ln.t + "\n"));
+      if(ln.big) bytes = bytes.concat(ESCPOS.big(false));
+    });
+    bytes = bytes.concat(ESCPOS.center(), ESCPOS.feed(4), ESCPOS.cut());
+    for(let i = 0; i < bytes.length; i += 100){
+      await ch.writeValue(new Uint8Array(bytes.slice(i, i + 100)));
+      await new Promise(r => setTimeout(r, 40));
+    }
+    toast("Receipt printed " + String.fromCodePoint(9989));
+  }catch(e){
+    toast(e.message && e.message.includes("cancel") ? "Cancelled" : "Printing failed: " + (e.message || "check printer"), true);
+  }
+};
 
 /* ---------- INVENTORY ---------- */
 function renderInventory(){
@@ -564,6 +644,65 @@ function renderInventory(){
   });
 }
 $("#invSearch").oninput = renderInventory;
+
+/* ---------- STOCK IN (receiving & supplier ledger) ---------- */
+function renderStockIn(){
+  const owed = suppliers.reduce((a,s)=>a+Math.max(0, (s.total||0)-(s.paid||0)), 0);
+  $("#siOwed").textContent = peso(owed);
+  $("#siSuppCount").textContent = suppliers.length + " suppliers";
+  $("#siCount").textContent = stockins.length;
+  $("#suppList").innerHTML = suppliers.map(s=>`<option value="${s.name}">`).join("");
+  $("#prodList2").innerHTML = products.map(p=>`<option value="${p.name}">`).join("");
+  $("#suppBody").innerHTML = suppliers.length ? suppliers.map(s=>{
+    const bal = (s.total||0) - (s.paid||0);
+    return `<div class="cashier-row">
+      <span>🚚 ${s.name}<br><small class="muted">bought ${peso(s.total||0)} · paid ${peso(s.paid||0)}</small></span>
+      <span><span class="pill ${bal>0?"warn":"ok"}">${bal>0?peso(bal)+" utang":"paid"}</span>
+        <button class="btn-primary sm" data-spay="${s.id}">💵 Bayad</button></span>
+    </div>`;
+  }).join("") : `<p class="muted">No suppliers yet — record your first delivery on the left.</p>`;
+  $$("#suppBody [data-spay]").forEach(b=>b.onclick=async ()=>{
+    const s = suppliers.find(x=>x.id===+b.dataset.spay);
+    const v = await inputModal(`Bayad to ${s.name} — balance ${peso((s.total||0)-(s.paid||0))}`, "Amount paid");
+    if(v === null) return;
+    const amt = parseFloat(v);
+    if(!(amt > 0)){ toast("Enter a valid amount", true); return; }
+    const applied = Math.min(amt, (s.total||0)-(s.paid||0));
+    s.paid = (s.paid||0) + applied;
+    (s.history=s.history||[]).unshift({ date:Date.now(), type:"bayad", amount:applied });
+    saveSuppliers(); renderStockIn();
+    toast(`Paid ${s.name} ${peso(applied)} ${String.fromCodePoint(9989)}`);
+  });
+  $("#siHistory").innerHTML = stockins.length ? stockins.slice(0,15).map(h=>`
+    <div class="cashier-row">
+      <span>${new Date(h.date).toLocaleString("en-PH")} — <b>${h.qty}x ${h.product}</b> from ${h.supplier}</span>
+      <b>${peso(h.total)}${h.paid < h.total ? ` <span class="pill warn">owed ${peso(h.total-h.paid)}</span>` : ' <span class="pill ok">paid</span>'}</b>
+    </div>`).join("") : `<p class="muted">No stock-ins recorded yet.</p>`;
+}
+$("#siQty").oninput = $("#siCost").oninput = ()=>{
+  $("#siTotal").value = peso(((+$("#siQty").value)||0) * ((+$("#siCost").value)||0));
+};
+$("#siSaveBtn").onclick = async ()=>{
+  if(currentUser().role !== "owner" && !await ownerGate("Recording stock-in requires the OWNER PIN")) return;
+  const pname = $("#siProduct").value.trim();
+  const p = products.find(x=>x.name.toLowerCase() === pname.toLowerCase());
+  if(!p) return toast("Choose a product from your inventory (add it first if new)", true);
+  const qty = parseInt($("#siQty").value), cost = parseFloat($("#siCost").value);
+  if(!(qty > 0) || !(cost >= 0)) return toast("Enter quantity and unit cost", true);
+  const total = Math.round(qty * cost * 100) / 100;
+  const paid = Math.min(Math.max(0, parseFloat($("#siPaid").value) || 0), total);
+  const sname = $("#siSupplier").value.trim() || "Walk-in";
+  let s = suppliers.find(x=>x.name.toLowerCase() === sname.toLowerCase());
+  if(!s){ s = { id:uid(), name:sname, total:0, paid:0, history:[] }; suppliers.push(s); }
+  s.total += total; s.paid += paid;
+  s.history.unshift({ date:Date.now(), type:"delivery", amount:total, paid, note:`${qty}x ${p.name}` });
+  p.stock += qty; if(cost > 0) p.cost = cost; // latest unit cost = true cost for profit reports
+  stockins.unshift({ date:Date.now(), supplier:s.name, product:p.name, qty, cost, total, paid });
+  saveSuppliers(); saveStockins(); saveProducts(); syncCatalog();
+  renderStockIn(); renderProducts(); renderInventory(); renderDashboard();
+  $("#siQty").value = ""; $("#siCost").value = ""; $("#siPaid").value = "0"; $("#siTotal").value = "";
+  toast(`Stock-in saved: ${qty}x ${p.name} ${String.fromCodePoint(9989)}`);
+};
 
 /* ---------- CSV import / export of products ---------- */
 function csvCell(v){ return '"' + String(v == null ? "" : v).replace(/"/g,'""') + '"'; }

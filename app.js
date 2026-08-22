@@ -657,13 +657,13 @@ function renderStockIn(){
     const bal = (s.total||0) - (s.paid||0);
     return `<div class="cashier-row">
       <span>🚚 ${s.name}<br><small class="muted">bought ${peso(s.total||0)} · paid ${peso(s.paid||0)}</small></span>
-      <span><span class="pill ${bal>0?"warn":"ok"}">${bal>0?peso(bal)+" utang":"paid"}</span>
-        <button class="btn-primary sm" data-spay="${s.id}">💵 Bayad</button></span>
+      <span><span class="pill ${bal>0?"warn":"ok"}">${bal>0?peso(bal)+" owed":"paid"}</span>
+        <button class="btn-primary sm" data-spay="${s.id}">💵 Pay</button></span>
     </div>`;
   }).join("") : `<p class="muted">No suppliers yet — record your first delivery on the left.</p>`;
   $$("#suppBody [data-spay]").forEach(b=>b.onclick=async ()=>{
     const s = suppliers.find(x=>x.id===+b.dataset.spay);
-    const v = await inputModal(`Bayad to ${s.name} — balance ${peso((s.total||0)-(s.paid||0))}`, "Amount paid");
+    const v = await inputModal(`Payment to ${s.name} — balance ${peso((s.total||0)-(s.paid||0))}`, "Amount paid");
     if(v === null) return;
     const amt = parseFloat(v);
     if(!(amt > 0)){ toast("Enter a valid amount", true); return; }

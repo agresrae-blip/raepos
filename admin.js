@@ -41,6 +41,34 @@ function logout(){
   $("#adminPass").value = ""; $("#adminLoginErr").textContent = "";
 }
 $("#adminLogout").onclick = logout;
+/* admin theme + font pickers (this console only) */
+const ADMIN_THEMES = [
+  { id:"sketchy", name:"✏️ Sketchy" }, { id:"minimal", name:"▫️ Minimal" },
+  { id:"girly", name:"🌸 Girly" }, { id:"sunset", name:"🌅 Sunset" },
+  { id:"ocean", name:"🌊 Ocean" }, { id:"forest", name:"🌿 Forest" }
+];
+const ADMIN_FONTS = { doodle:"✏️ Doodle", clean:"▫️ Clean", round:"🔤 Round" };
+function renderAdminPickers(){
+  const cur = localStorage.getItem("raepos_admin_theme") || "sketchy";
+  $("#adminThemeGrid").innerHTML = ADMIN_THEMES.map(t=>`
+    <button class="theme-opt ${cur===t.id?"on":""}" data-at="${t.id}">${t.name}</button>`).join("");
+  const curF = localStorage.getItem("raepos_admin_font") || "doodle";
+  $("#adminFontGrid").innerHTML = Object.entries(ADMIN_FONTS).map(([id,n])=>`
+    <button class="theme-opt font-opt ${curF===id?"on":""}" data-af="${id}">${n}</button>`).join("");
+  $$("#adminThemeGrid [data-at]").forEach(b=>b.onclick=()=>{
+    localStorage.setItem("raepos_admin_theme", b.dataset.at);
+    document.documentElement.dataset.theme = b.dataset.at;
+    renderAdminPickers(); toast("Admin theme: " + b.textContent);
+  });
+  $$("#adminFontGrid [data-af]").forEach(b=>b.onclick=()=>{
+    localStorage.setItem("raepos_admin_font", b.dataset.af);
+    const F = { doodle:['"Patrick Hand",cursive','"Gochi Hand",cursive'], clean:['"Segoe UI",system-ui,sans-serif','"Segoe UI",system-ui,sans-serif'], round:['Quicksand,"Segoe UI",sans-serif','Quicksand,"Segoe UI",sans-serif'] }[b.dataset.af];
+    document.documentElement.style.setProperty("--font-hand", F[0]);
+    document.documentElement.style.setProperty("--font-title", F[1]);
+    renderAdminPickers(); toast("Admin font: " + b.textContent);
+  });
+}
+renderAdminPickers();
 $("#themeBtn").onclick = ()=>{
   const el = document.documentElement;
   const next = el.dataset.mode === "dark" ? "light" : "dark";

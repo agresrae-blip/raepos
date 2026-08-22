@@ -339,3 +339,7 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 /* font picker */
 .font-opt{flex-direction:row;gap:8px;justify-content:center;padding:12px 8px;font-size:18px}
 .font-opt small{color:var(--mut)}
+
+/* owner-gate & input prompts always above other modals */
+#gateModal{z-index:48}
+#inputModal{z-index:47}

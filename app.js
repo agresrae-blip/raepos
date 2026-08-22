@@ -1260,6 +1260,12 @@ async function orderAction(oid, action){
 function startOrderPolling(){ clearInterval(window._op); window._op = setInterval(()=>pollOrders(true), 45e3); }
 
 /* ---------- owner gate & generic input modal ---------- */
+$("#gateEye").onclick = ()=>{
+  const inp = $("#gatePin");
+  const showing = inp.type === "text";
+  inp.type = showing ? "password" : "text";
+  $("#gateEye").textContent = showing ? "\U0001F441" : "\U0001F648";
+};
 function ownerGate(msg){
   return new Promise(res=>{
     $("#gateMsg").textContent = msg || "This action requires the owner's PIN.";

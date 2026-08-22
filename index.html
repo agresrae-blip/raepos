@@ -475,7 +475,10 @@
   <div class="modal-card">
     <h3>🔑 Owner Authorization</h3>
     <p class="muted" id="gateMsg">This action requires the owner's PIN.</p>
-    <input type="password" id="gatePin" inputmode="numeric" maxlength="6" placeholder="Owner PIN" style="text-align:center;letter-spacing:6px;font-size:1.2rem">
+<div style="display:flex;gap:8px;align-items:center">
+      <input type="password" id="gatePin" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Owner PIN" style="flex:1;text-align:center;letter-spacing:6px;font-size:1.2rem">
+      <button type="button" id="gateEye" class="btn-ghost sm" title="Show PIN">👁</button>
+    </div>
     <div class="modal-actions">
       <button class="btn-ghost" id="gateCancel">Cancel</button>
       <button class="btn-primary" id="gateOk">Authorize</button>

@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RaePOS — Admin Console</title>
 <link rel="stylesheet" href="style.css">
-<script>try{document.documentElement.dataset.mode=localStorage.getItem("raepos_theme")||"light";}catch(e){}</script>
+<script>try{document.documentElement.dataset.mode=localStorage.getItem("raepos_theme")||"light";
+var at=localStorage.getItem("raepos_admin_theme");if(at)document.documentElement.dataset.theme=at;
+var af=localStorage.getItem("raepos_admin_font");if(af){var F={doodle:['"Patrick Hand",cursive','"Gochi Hand",cursive'],clean:['"Segoe UI",system-ui,sans-serif','"Segoe UI",system-ui,sans-serif'],round:['Quicksand,"Segoe UI",sans-serif','Quicksand,"Segoe UI",sans-serif']}[af];if(F){document.documentElement.style.setProperty("--font-hand",F[0]);document.documentElement.style.setProperty("--font-title",F[1]);}}}catch(e){}</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
 <body>
@@ -88,6 +90,15 @@
           <label>Restore from backup file</label>
           <input type="file" id="restoreFile" accept=".json,application/json">
           <button id="restoreBtn" class="btn-danger btn-block" style="margin-top:8px">⚠️ Restore (overwrites server data)</button>
+        </div>
+        <div class="panel">
+          <h3>🎨 Admin Theme</h3>
+          <p class="muted">Your console's personal look (does not affect clients).</p>
+          <div class="theme-grid" id="adminThemeGrid"></div>
+        </div>
+        <div class="panel">
+          <h3>🔤 Admin Font</h3>
+          <div class="theme-grid" id="adminFontGrid"></div>
         </div>
         <div class="panel">
           <h3>ℹ️ How selling works</h3>

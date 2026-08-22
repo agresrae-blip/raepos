@@ -1055,6 +1055,11 @@ $$("[data-close]").forEach(b=>b.onclick=closeModals);
 $$(".modal").forEach(m=>m.addEventListener("click", e=>{ if(e.target===m) closeModals(); }));
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModals(); });
 
+/* ---------- installable app (PWA) ---------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("/sw.js").catch(()=>{}));
+}
+
 /* ---------- init ---------- */
 if(!shiftStart){ shiftStart = Date.now(); DB.set("shiftStart", shiftStart); }
 refreshCats(); renderProducts(); renderCart(); renderDashboard(); renderCashiers();

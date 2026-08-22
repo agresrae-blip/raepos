@@ -270,9 +270,12 @@ async function placeOrder(){
       <p>Order <b>${r.orderId}</b> — total <b>${peso(r.total)}</b><br>
       ${pay==="COD"?"Pay cash on delivery.":"Pay via GCash now if you haven't yet."}<br>
       The store will confirm your order soon. Thank you! 💙</p>
-      <div class="gnote" style="margin-top:14px;text-align:left"><b>🔗 Track your order here</b> (save this!):<br>
-      <input id="trackUrlBox" readonly value="${trackUrl}" style="margin-top:6px;font-size:.75rem">
-      <button class="btn" style="margin-top:6px;padding:10px" onclick="navigator.clipboard.writeText('${trackUrl}').then(()=>this.textContent='Copied!')">Copy link</button></div>`;
+      <button class="btn" onclick="location.href='${trackUrl}'">🛵 Track my order now</button>
+      <p style="color:var(--mut);font-size:.8rem;margin-top:10px">Opening your order status automatically…</p>
+      <div class="gnote" style="margin-top:10px;text-align:left"><small>Save this link to check your order later:<br>
+      <input id="trackUrlBox" readonly value="${trackUrl}" style="margin-top:6px;font-size:.72rem"></small>
+      <button class="btn" style="margin-top:6px;padding:8px;font-size:.95rem" onclick="navigator.clipboard.writeText('${trackUrl}').then(()=>this.textContent='Copied!')">Copy link</button></div>`;
+    setTimeout(()=>{ if (location.pathname.includes("/shop/")) location.href = trackUrl; }, 3500);
   }catch(e){
     $("#formErr").textContent = "Connection problem — please try again.";
     btn.disabled = false; btn.textContent = "Place Order ▸";

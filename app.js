@@ -247,6 +247,7 @@ $$("#nav .nav-btn").forEach(b => b.onclick = async ()=>{
   $$(".page").forEach(p=>p.classList.remove("active"));
   $("#page-"+b.dataset.page).classList.add("active");
   if(b.dataset.page==="dashboard") renderDashboard();
+  if(b.dataset.page==="inventory") renderInventory();
   if(b.dataset.page==="sales") renderSales();
   if(b.dataset.page==="online"){ renderOnline(); pollOrders(true); }
   if(b.dataset.page==="reports") renderReports();
@@ -314,7 +315,7 @@ function renderProducts(){
   );
   $("#productGrid").innerHTML = list.length ? list.map(p=>`
     <div class="prod-card ${p.stock<=0?"oos":""}" data-id="${p.id}">
-      <div class="prod-emoji">${p.emoji||"📦"}</div>
+      <div class="prod-emoji">${p.img?`<img src="${p.img}" class="prod-img" alt="">`:(p.emoji||"📦")}</div>
       <h4>${p.name}</h4>
       <div class="prod-price">${peso(p.price)}</div>
       <div class="prod-stock ${p.stock<=0?"out":""}">${p.stock<=0?"OUT OF STOCK":p.stock+" in stock"}</div>
@@ -553,8 +554,9 @@ function renderInventory(){
             <button class="btn-ghost sm" data-del="${p.id}">🗑</button></td>
       </tr>`;}).join("");
   $$("#invBody [data-edit]").forEach(b=>b.onclick=()=>openProductModal(+b.dataset.edit));
-  $$("#invBody [data-del]").forEach(b=>b.onclick=()=>{
+  $$("#invBody [data-del]").forEach(b=>b.onclick=async ()=>{
     const p = products.find(x=>x.id===+b.dataset.del);
+    if(currentUser().role !== "owner" && !await ownerGate(`Deleting "${p.name}" requires the OWNER PIN`)) return;
     if(confirm(`Delete "${p.name}" from inventory?`)){
       products = products.filter(x=>x.id!==p.id); saveProducts(); syncCatalog();
       renderInventory(); renderProducts(); refreshCats(); renderDashboard(); toast("Product deleted");
@@ -564,6 +566,10 @@ function renderInventory(){
 $("#invSearch").oninput = renderInventory;
 $("#addProductBtn").onclick = ()=>openProductModal(null);
 
+let pmImgData = "";
+function renderPmImg(){
+  $("#pmImgBox").innerHTML = pmImgData ? `<img src="${pmImgData}" alt="">` : "🖼️";
+}
 function openProductModal(id){
   editingId = id;
   const p = id ? products.find(x=>x.id===id) : null;
@@ -572,8 +578,16 @@ function openProductModal(id){
   $("#pmBarcode").value = p?p.barcode||"":"";
   $("#pmPrice").value = p?p.price:""; $("#pmCost").value = p?p.cost||0:"";
   $("#pmStock").value = p?p.stock:0; $("#pmLow").value = p?p.low||5:5;
+  pmImgData = p ? (p.img||"") : "";
+  renderPmImg();
   openModal("#productModal");
 }
+$("#pmImg").addEventListener("change", e=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  fileToDataUrl(f, dataUrl=>{ pmImgData = dataUrl; renderPmImg(); e.target.value=""; }, 220);
+});
+$("#pmImgRemove").onclick = ()=>{ pmImgData = ""; renderPmImg(); };
 $("#pmSave").onclick = ()=>{
   const name = $("#pmName").value.trim(), cat = $("#pmCat").value.trim(),
         price = +$("#pmPrice").value, stock = +$("#pmStock").value;
@@ -581,12 +595,12 @@ $("#pmSave").onclick = ()=>{
   if(editingId){
     Object.assign(products.find(x=>x.id===editingId), {
       name, cat, price, cost:+$("#pmCost").value||0, stock,
-      low:+$("#pmLow").value||0, barcode:$("#pmBarcode").value.trim()
+      low:+$("#pmLow").value||0, barcode:$("#pmBarcode").value.trim(), img:pmImgData
     });
     toast("Product updated");
   } else {
     products.push({ id:uid(), name, cat, price, cost:+$("#pmCost").value||0, stock,
-      low:+$("#pmLow").value||0, barcode:$("#pmBarcode").value.trim(),
+      low:+$("#pmLow").value||0, barcode:$("#pmBarcode").value.trim(), img:pmImgData,
       emoji:EMOJIS[Math.floor(Math.random()*EMOJIS.length)] });
     toast("Product added");
   }
@@ -828,7 +842,7 @@ function syncCatalog(){
   licApi("catalog", {
     code: lic.code,
     online: !!settings.onlineStore,
-    products: products.filter(p=>p.stock>0).map(p=>({name:p.name, price:p.price, emoji:p.emoji||"📦", stock:p.stock})),
+    products: products.filter(p=>p.stock>0).map(p=>({name:p.name, price:p.price, emoji:p.emoji||"📦", stock:p.stock, img:p.img||""})),
     store: { name:settings.name, logo:settings.logo||"", address:settings.address, phone:settings.phone,
              gcash:a.gcashNum||"", gcashName:a.gcashName||"", qr:settings.qr||"", deliveryFee:settings.deliveryFee||0 }
   }).catch(()=>{});
@@ -975,13 +989,13 @@ function inputModal(title, placeholder){
 }
 
 /* ---------- store QR ---------- */
-function fileToDataUrl(file, cb){
+function fileToDataUrl(file, cb, max){
   if(!file.type.startsWith("image/")){ toast("Please choose an image file", true); return; }
   const rd = new FileReader();
   rd.onload = ()=>{
     const img = new Image();
     img.onload = ()=>{
-      const MAX = 500, sc = Math.min(1, MAX / Math.max(img.width, img.height));
+      const MAX = max || 500, sc = Math.min(1, MAX / Math.max(img.width, img.height));
       const cv = document.createElement("canvas");
       cv.width = Math.max(1, Math.round(img.width * sc));
       cv.height = Math.max(1, Math.round(img.height * sc));

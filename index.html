@@ -333,6 +333,13 @@
   <div class="modal-card">
     <h3 id="pmTitle">Add Product</h3>
     <label>Name *</label><input id="pmName">
+    <div class="logo-edit" style="margin:10px 0 4px">
+      <div class="logo-box" id="pmImgBox" style="width:58px;height:58px;min-width:58px;font-size:1.1rem">🖼️</div>
+      <div>
+        <input type="file" id="pmImg" accept="image/*" style="font-size:.75rem">
+        <button type="button" id="pmImgRemove" class="btn-ghost sm" style="margin-top:6px">Remove Picture</button>
+      </div>
+    </div>
     <div class="two">
       <div><label>Category *</label><input id="pmCat" list="catList"><datalist id="catList"></datalist></div>
       <div><label>Barcode / SKU</label><input id="pmBarcode"></div>

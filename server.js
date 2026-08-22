@@ -149,7 +149,7 @@ async function handleApi(req, res, url) {
 
   // POS publishes its product catalog + store info
   if (route === "/api/catalog" && req.method === "POST") {
-    const b = await readBody(req);
+    const b = await readBody(req, 20e6); // products may carry compressed photos
     const c = db.codes.find(x => x.code === String(b.code || "").trim().toUpperCase());
     if (!c) return send(res, 404, { ok: false, error: "License not found." });
     if (c.revoked) return send(res, 403, { ok: false, error: "Revoked." });
@@ -162,7 +162,8 @@ async function handleApi(req, res, url) {
                deliveryFee: Math.max(0, +((b.store||{}).deliveryFee) || 0) },
       products: (Array.isArray(b.products) ? b.products : []).slice(0, 500).map(p => ({
         name: String(p.name||"").slice(0,80), price: Math.max(0, +p.price || 0),
-        emoji: String(p.emoji||"📦").slice(0,8), stock: Math.max(0, parseInt(p.stock,10) || 0)
+        emoji: String(p.emoji||"📦").slice(0,8), stock: Math.max(0, parseInt(p.stock,10) || 0),
+        img: String(p.img||"").slice(0, 300000)
       }))
     };
     save();

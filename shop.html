@@ -137,8 +137,10 @@ let store = null, items = [], cart = {}, pay = "COD";
 
 function trackPage(){
   const oid = pathParts[4].toUpperCase();
+  let store2 = {};
   const render = ()=>{
     fetch("/api/shop/" + encodeURIComponent(code) + "/order/" + oid).then(r=>r.json()).then(d=>{
+      store2 = d.store || {};
       if(!d.ok){ $("#content").innerHTML = '<div class="err"><h2>Order not found</h2>Check your order link.</div>'; return; }
       const S = { new:["🆕","Waiting for the store to confirm"], preparing:["👨‍🍳","Being prepared"], delivering:["🛵","On its way to you!"], done:["✅","Delivered — enjoy!"], rejected:["❌","Sorry — the store rejected this order"] }[d.order.status] || ["⏳", d.order.status];
       $("#head").innerHTML = (d.store.logo?`<img src="${d.store.logo}" alt="logo">`:"") + `<h1>${d.store.name}</h1><div class="sub">Order tracking</div>`;
@@ -148,6 +150,13 @@ function trackPage(){
           <h2 style="color:#fff">${S[1]}</h2>
           <p style="color:#8b93b5">Order <b style="color:#fff">${d.order.id}</b> · ${new Date(d.order.ts).toLocaleString("en-PH")}</p>
           ${d.order.status==="rejected" && d.order.refundRef ? `<p style="color:#8fe0b1;margin-top:6px">💰 GCash refund sent — reference: <b>${d.order.refundRef}</b></p>`:""}
+          ${d.order.payment==="GCash" ? `
+          <div style="background:var(--blue);border:2px solid var(--line);border-radius:var(--wob2);padding:12px;margin-top:14px;box-shadow:2px 2px 0 var(--shadow)">
+            <b>💱 Pay via GCash${d.order.status==="delivering"?" — have it ready, your order is on its way!":""}</b>
+            ${store2.qr ? `<img src="${store2.qr}" alt="GCash QR" style="width:100%;max-width:210px;background:#fff;padding:8px;border:2px solid var(--line);border-radius:12px;display:block;margin:10px auto 4px;cursor:zoom-in" onclick="showPic('${store2.qr}','Scan to pay — ${store2.name}',0)">` : ""}
+            ${store2.gcash ? `<div style="font-size:.9rem">GCash: <b>${store2.gcash}</b>${store2.gcashName?" — "+store2.gcashName:""}</div>` : ""}
+            <div style="font-size:.75rem;color:#1b2a4a;margin-top:4px">Tap the QR to enlarge — you can pay now or when your order arrives.</div>
+          </div>`:""}
           ${d.order.status==="rejected" && d.order.payment==="GCash" && !d.order.refundRef ? `<p style="color:#f2c979;margin-top:6px">Your GCash payment will be refunded — please contact the store.</p>`:""}
         </div>
         <div class="sheet" style="position:static;max-width:100%;margin-top:14px">

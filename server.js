@@ -247,7 +247,8 @@ async function handleApi(req, res, url) {
     if (!o) return send(res, 404, { ok: false, error: "Order not found." });
     const st = c.catalog ? c.catalog.store : {};
     return send(res, 200, { ok: true,
-      store: { name: st.name || "Store", phone: st.phone || "", logo: st.logo || "" },
+      store: { name: st.name || "Store", phone: st.phone || "", logo: st.logo || "",
+               qr: st.qr || "", gcash: st.gcash || "", gcashName: st.gcashName || "" },
       order: { id: o.id, ts: o.ts, items: o.items, itemsTotal: o.itemsTotal, fee: o.fee,
                total: o.total, payment: o.payment, status: o.status, refundRef: o.refundRef || "", customerName: o.customer.name } });
   }

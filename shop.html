@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Online Store</title>
-<script>try{var t=localStorage.getItem("raepos_theme");if(t)document.documentElement.dataset.mode=t;}catch(e){}</script>
+<script>try{document.documentElement.dataset.mode=localStorage.getItem("raepos_theme")||"light";}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Patrick+Hand&family=Shantell+Sans:wght@800&display=swap" rel="stylesheet">
 <style>
 :root{--paper:#f8f5ee;--card:#fffdf6;--ink:#2f2b26;--mut:#7a7263;--line:#2f2b26;--shadow:rgba(47,43,38,.82);
@@ -136,6 +136,7 @@ if (TRACK_MODE) trackPage();
 
 fetch("/api/shop/" + encodeURIComponent(code)).then(r=>r.json()).then(d=>{
   if(!d.ok){ $("#offBox").classList.remove("hidden"); return; }
+    if (d.store.theme) document.documentElement.dataset.theme = d.store.theme;
   if (TRACK_MODE) return; // tracking page has its own header
   store = d.store; items = d.products;
   $("#head").innerHTML = (store.logo?`<img src="${store.logo}" alt="logo">`:"") +

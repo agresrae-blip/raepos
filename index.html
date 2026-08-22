@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RaePOS — Point of Sale</title>
 <link rel="stylesheet" href="style.css">
-<script>try{var t=localStorage.getItem("raepos_theme");if(t)document.documentElement.dataset.mode=t;}catch(e){}</script>
+<script>try{document.documentElement.dataset.mode=localStorage.getItem("raepos_theme")||"light";}catch(e){}</script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -317,6 +317,11 @@
           <hr class="sep">
           <h3>💬 Support & Contacts</h3>
           <div id="settingsContacts" class="contact-col"></div>
+        </div>
+        <div class="panel">
+          <h3>🎨 Store Theme</h3>
+          <p class="muted">Your unique look — applies to your POS <b>and</b> your online store.</p>
+          <div class="theme-grid" id="themeGrid"></div>
         </div>
         <div class="panel">
           <h3>🖼️ Branding</h3>

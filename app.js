@@ -985,6 +985,32 @@ $("#resetAllBtn").onclick = async ()=>{
   }
 };
 
+/* ---------- store themes (unique look per client) ---------- */
+const THEMES = [
+  { id:"sketchy", name:"✏️ Sketchy Classic", desc:"paper & pastel doodles" },
+  { id:"minimal", name:"▫️ Minimal Clean",  desc:"simple, no doodles" },
+  { id:"girly",   name:"🌸 Girly Pink",      desc:"cute & sweet" },
+  { id:"sunset",  name:"🌅 Sunset Warm",     desc:"orange & cozy" },
+  { id:"ocean",   name:"🌊 Ocean Cool",      desc:"blue & fresh" },
+  { id:"forest",  name:"🌿 Forest Nature",   desc:"green & calm" }
+];
+function applyTheme(){ document.documentElement.dataset.theme = settings.theme || "sketchy"; }
+function renderThemePicker(){
+  const sw = { sketchy:["#bfe8cf","#fdf3b3","#f9cdd8"], minimal:["#e8ebe7","#dde8f2","#faf3d3"],
+    girly:["#f9cdd8","#ffb3cd","#e8d5f7"], sunset:["#ffd9b8","#ffe3a9","#ff9d7a"],
+    ocean:["#a9e8dc","#a9d4f2","#d9f2ef"], forest:["#bfe8c9","#f0ecb8","#d8e8c2"] };
+  $("#themeGrid").innerHTML = THEMES.map(t=>`
+    <button class="theme-opt ${((settings.theme||"sketchy")===t.id)?"on":""}" data-th="${t.id}">
+      <span class="swatches">${(sw[t.id]||[]).map(c=>`<i style="background:${c}"></i>`).join("")}</span>
+      <b>${t.name}</b><small>${t.desc}</small>
+    </button>`).join("");
+  $$("#themeGrid [data-th]").forEach(b=>b.onclick=()=>{
+    settings.theme = b.dataset.th;
+    saveSettings(); applyTheme(); renderThemePicker(); syncCatalog();
+    toast("Theme applied to your POS and online store " + String.fromCodePoint(127912));
+  });
+}
+
 /* ---------- store logo (client-editable) ---------- */
 function applyLogo(){
   const src = settings.logo || "";
@@ -1092,7 +1118,7 @@ function syncCatalog(){
     code: lic.code,
     online: !!settings.onlineStore,
     products: products.filter(p=>p.stock>0).map(p=>({name:p.name, price:p.price, emoji:p.emoji||"📦", stock:p.stock, img:p.img||""})),
-    store: { name:settings.name, logo:settings.logo||"", address:settings.address, phone:settings.phone,
+    store: { name:settings.name, logo:settings.logo||"", address:settings.address, phone:settings.phone, theme:settings.theme||"sketchy",
              gcash:a.gcashNum||"", gcashName:a.gcashName||"", qr:settings.qr||"", deliveryFee:settings.deliveryFee||0 }
   }).catch(()=>{});
 }
@@ -1351,5 +1377,5 @@ if ("serviceWorker" in navigator) {
 /* ---------- init ---------- */
 if(!shiftStart){ shiftStart = Date.now(); DB.set("shiftStart", shiftStart); }
 refreshCats(); renderProducts(); renderCart(); renderDashboard(); renderCashiers();
-loadSettingsForm(); refreshFoot(); applyLogo(); applyQr(); renderHeldBadge(); renderOnline();
+loadSettingsForm(); refreshFoot(); applyLogo(); applyQr(); applyTheme(); renderThemePicker(); renderHeldBadge(); renderOnline();
 boot();

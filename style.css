@@ -19,11 +19,51 @@ html[data-mode="dark"]{
   --accent:#c3b5ff; --ok:#8fe0b1; --bad:#ff9a99; --warn:#f2c979;
 }
 
+/* ---------- STORE THEMES (unique looks per client) ---------- */
+html[data-theme="minimal"]{
+  --font-hand:"Segoe UI",system-ui,sans-serif; --font-title:"Segoe UI",system-ui,sans-serif;
+  --font-bold:"Segoe UI",system-ui,sans-serif; font-size:16px;
+  --wob1:10px; --wob2:10px; --wob3:14px; --shadow:rgba(47,43,38,.28);
+}
+html[data-theme="minimal"] button{border-width:2px}
+html[data-mode="light"][data-theme="minimal"]{
+  --paper:#f6f6f4; --card:#ffffff; --mint:#e8ebe7; --blue:#dde8f2; --peach:#f2e9df;
+  --yellow:#faf3d3; --pink:#f4e4ea; --accent:#4a6fa5;
+}
+html[data-theme="girly"]{
+  --wob3:62% 38% 60% 40%/45% 62% 38% 55%;
+  --wob1:225px 35px 255px 25px/25px 255px 35px 225px;
+}
+html[data-mode="light"][data-theme="girly"]{
+  --paper:#fdf3f7; --mint:#f9cdd8; --blue:#e8d5f7; --peach:#ffd9e8; --yellow:#fdf3b3;
+  --pink:#ffb3cd; --accent:#d16ba5; --ok:#7a3f66;
+}
+html[data-mode="light"][data-theme="sunset"]{
+  --paper:#fdf6ef; --mint:#ffd9b8; --blue:#f9cdd8; --peach:#ffc9a3; --yellow:#ffe3a9;
+  --pink:#ff9d7a; --accent:#e2593f; --ok:#9c5a22;
+}
+html[data-mode="light"][data-theme="ocean"]{
+  --paper:#f2f8fa; --mint:#a9e8dc; --blue:#a9d4f2; --peach:#cfe8f7; --yellow:#d9f2ef;
+  --pink:#c2ddf2; --accent:#1f7fa8; --ok:#16695a;
+}
+html[data-mode="light"][data-theme="forest"]{
+  --paper:#f5f7ef; --mint:#bfe8c9; --blue:#cfe8d4; --peach:#e8e0c0; --yellow:#f0ecb8;
+  --pink:#d8e8c2; --accent:#3f7d46; --ok:#2e6336;
+}
+/* theme picker */
+.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.theme-opt{display:flex;flex-direction:column;gap:4px;align-items:center;padding:12px 8px;font-size:16px}
+.theme-opt.on{background:var(--mint);transform:translate(2px,2px);box-shadow:0 0 0 var(--shadow)}
+.theme-opt small{color:var(--mut);font-size:13px;font-family:var(--font-hand,"Patrick Hand",cursive)}
+.swatches{display:flex;gap:3px}
+.swatches i{width:16px;height:16px;border:2px solid var(--line);border-radius:50% 45% 55% 48%/48% 55% 45% 52%;display:block}
+
+
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
   background:var(--paper);color:var(--ink);
-  font-family:"Patrick Hand","Segoe UI",cursive;font-size:18px;
+  font-family:var(--font-hand,"Patrick Hand","Segoe UI",cursive);font-size:18px;
   background-image:radial-gradient(rgba(120,110,95,.28) 1.3px,transparent 1.3px);
   background-size:26px 26px;overflow:hidden;
 }
@@ -34,7 +74,7 @@ body{
 
 /* ---------- generic controls ---------- */
 button{cursor:pointer;border:2.5px solid var(--line);color:var(--ink);background:var(--card);
-  font-family:"Gochi Hand","Patrick Hand",cursive;font-size:19px;padding:10px 18px;
+  font-family:var(--font-title,"Gochi Hand",cursive);font-size:19px;padding:10px 18px;
   border-radius:var(--wob1);box-shadow:3px 3px 0 var(--shadow);transition:.1s}
 button:hover{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--shadow)}
 button:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--shadow)}
@@ -47,7 +87,7 @@ button:disabled{opacity:.45;cursor:not-allowed;box-shadow:3px 3px 0 var(--shadow
 input,select,textarea{
   background:var(--card);border:2.5px solid var(--line);color:var(--ink);
   border-radius:var(--wob2);padding:10px 14px;outline:none;font-size:19px;
-  font-family:"Patrick Hand",cursive}
+  font-family:var(--font-hand,"Patrick Hand",cursive)}
 input:focus,select:focus{background:var(--yellow)}
 label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 .chip{background:var(--card);padding:5px 13px;font-size:16px;border-radius:var(--wob1);box-shadow:2px 2px 0 var(--shadow)}
@@ -66,7 +106,7 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 .login-card{position:relative;z-index:2;width:380px;margin:auto;background:var(--card);
   border:2.5px solid var(--line);border-radius:var(--wob1);box-shadow:6px 7px 0 var(--shadow);
   padding:36px 32px;text-align:center}
-.login-card h1{font-family:"Gochi Hand",cursive;font-size:32px}
+.login-card h1{font-family:var(--font-title,"Gochi Hand",cursive);font-size:32px}
 .login-card h1 span{color:var(--accent)}
 .login-sub{color:var(--mut);font-size:.95rem;margin:4px 0 20px}
 .login-card label{display:block;text-align:left;font-size:.85rem;color:var(--mut);margin-bottom:6px}
@@ -82,7 +122,7 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 /* ---------- LAYOUT ---------- */
 .app{display:grid;grid-template-columns:240px 1fr;height:100vh}
 .sidebar{background:var(--card);border-right:2.5px solid var(--line);display:flex;flex-direction:column;padding:20px 14px;position:relative}
-.brand{display:flex;align-items:center;gap:10px;font-size:26px;padding:2px 8px 18px;font-family:"Gochi Hand",cursive}
+.brand{display:flex;align-items:center;gap:10px;font-size:26px;padding:2px 8px 18px;font-family:var(--font-title,"Gochi Hand",cursive)}
 .brand-mark{width:40px;height:40px;border-radius:var(--wob3);background:var(--yellow);border:2.5px solid var(--line);
   display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:2px 3px 0 var(--shadow);
   transform:rotate(-3deg);overflow:hidden}
@@ -106,19 +146,19 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 .page.active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(6px) rotate(-.3deg)}}
 .page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px}
-.page-head h2{font-family:"Gochi Hand",cursive;font-size:34px}
+.page-head h2{font-family:var(--font-title,"Gochi Hand",cursive);font-size:34px}
 .date{color:var(--mut);font-size:.9rem}
 
 /* ---------- PANELS & CARDS ---------- */
 .panel{background:var(--card);border:2.5px solid var(--line);border-radius:var(--wob1);
   box-shadow:4px 5px 0 var(--shadow);padding:18px 20px;margin-bottom:20px;position:relative}
 .panel:nth-of-type(even){border-radius:var(--wob2)}
-.panel h3{font-family:"Gochi Hand",cursive;font-size:23px;margin-bottom:12px}
+.panel h3{font-family:var(--font-title,"Gochi Hand",cursive);font-size:23px;margin-bottom:12px}
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:18px;margin-bottom:20px}
 .stat-card{border:2.5px solid var(--line);border-radius:var(--wob1);padding:16px 18px;box-shadow:4px 4px 0 var(--shadow)}
 .stat-card:nth-child(even){border-radius:var(--wob2)}
 .stat-card small{color:var(--mut);font-size:.78rem;text-transform:uppercase;letter-spacing:1px}
-.stat-card strong{display:block;font-family:"Gochi Hand",cursive;font-size:32px;margin:6px 0 2px}
+.stat-card strong{display:block;font-family:var(--font-title,"Gochi Hand",cursive);font-size:32px;margin:6px 0 2px}
 .stat-card span{color:var(--mut);font-size:.82rem}
 .c1{background:var(--yellow)} .c2{background:var(--blue)} .c3{background:var(--mint)} .c4{background:var(--peach)}
 .dash-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -142,8 +182,8 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 .prod-card:nth-child(even){border-radius:var(--wob2)}
 .prod-card:hover{transform:translate(2px,2px) rotate(-1deg);box-shadow:1px 1px 0 var(--shadow);background:var(--yellow)}
 .prod-emoji{font-size:2rem;margin-bottom:6px}
-.prod-card h4{font-family:"Shantell Sans",cursive;font-weight:800;font-size:.82rem;margin-bottom:6px;min-height:34px}
-.prod-price{font-family:"Gochi Hand",cursive;font-size:22px;color:var(--ok)}
+.prod-card h4{font-family:var(--font-bold,"Shantell Sans",cursive);font-weight:800;font-size:.82rem;margin-bottom:6px;min-height:34px}
+.prod-price{font-family:var(--font-title,"Gochi Hand",cursive);font-size:22px;color:var(--ok)}
 .prod-stock{font-size:.75rem;color:var(--mut);margin-top:4px}
 .prod-stock.out{color:var(--bad)}
 .prod-card.oos{opacity:.45;pointer-events:none}
@@ -152,18 +192,18 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 .pos-right{background:var(--card);border:2.5px solid var(--line);border-radius:var(--wob2);
   box-shadow:5px 6px 0 var(--shadow);display:flex;flex-direction:column;overflow:hidden}
 .cart-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:2px dashed var(--mut)}
-.cart-head h3{font-family:"Gochi Hand",cursive;font-size:22px}
+.cart-head h3{font-family:var(--font-title,"Gochi Hand",cursive);font-size:22px}
 .cart-list{flex:1;overflow-y:auto;padding:8px 18px}
 .cart-empty{color:var(--mut);text-align:center;padding:50px 0;line-height:1.8}
 .cart-item{display:grid;grid-template-columns:1fr auto;gap:4px;padding:10px 0;border-bottom:2px dashed var(--mut)}
 .cart-item h5{font-size:.95rem}
 .qty-ctrl{display:flex;align-items:center;gap:8px}
 .qty-ctrl button{width:30px;height:30px;padding:0;border-radius:var(--wob3);background:var(--peach);font-size:20px;line-height:1;box-shadow:2px 2px 0 var(--shadow)}
-.cart-item .line-total{font-family:"Gochi Hand",cursive;font-size:20px;color:var(--ok);text-align:right}
+.cart-item .line-total{font-family:var(--font-title,"Gochi Hand",cursive);font-size:20px;color:var(--ok);text-align:right}
 .cart-summary{border-top:2px dashed var(--mut);padding:14px 18px}
 .cart-summary .row{display:flex;justify-content:space-between;font-size:.92rem;color:var(--mut);margin-bottom:6px}
 .cart-summary .row b{color:var(--ink)}
-.cart-summary .total{font-family:"Gochi Hand",cursive;font-size:24px;color:var(--ink)}
+.cart-summary .total{font-family:var(--font-title,"Gochi Hand",cursive);font-size:24px;color:var(--ink)}
 .cart-summary .total b{font-size:32px;color:var(--ok)}
 .disc-btns{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
 
@@ -171,10 +211,10 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 .table-panel{padding:0;overflow-x:auto}
 .data-table{width:100%;border-collapse:collapse;font-size:.9rem}
 .data-table th{text-align:left;padding:12px 16px;color:var(--mut);font-size:.72rem;text-transform:uppercase;
-  letter-spacing:1px;border-bottom:2.5px solid var(--line);font-family:"Shantell Sans",cursive}
+  letter-spacing:1px;border-bottom:2.5px solid var(--line);font-family:var(--font-bold,"Shantell Sans",cursive)}
 .data-table td{padding:11px 16px;border-bottom:2px dashed rgba(138,127,106,.5)}
 .data-table tr:hover td{background:var(--yellow)}
-.pill{padding:2px 11px;border:2px solid var(--line);font-size:.74rem;font-family:"Shantell Sans",cursive;font-weight:800;border-radius:var(--wob1);white-space:nowrap}
+.pill{padding:2px 11px;border:2px solid var(--line);font-size:.74rem;font-family:var(--font-bold,"Shantell Sans",cursive);font-weight:800;border-radius:var(--wob1);white-space:nowrap}
 .pill.ok{background:var(--mint)} .pill.warn{background:var(--peach)} .pill.bad{background:var(--pink)}
 .pill.pay{background:var(--blue)}
 
@@ -184,7 +224,7 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
   border-radius:var(--wob1);box-shadow:6px 7px 0 var(--shadow);padding:24px;animation:pop .18s ease}
 .modal-card.wide{width:540px}
 @keyframes pop{from{transform:scale(.95) rotate(-1deg);opacity:0}}
-.modal-card h3{font-family:"Gochi Hand",cursive;font-size:26px;margin-bottom:12px}
+.modal-card h3{font-family:var(--font-title,"Gochi Hand",cursive);font-size:26px;margin-bottom:12px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 .sep{border:none;border-top:2px dashed var(--mut);margin:16px 0}
@@ -199,14 +239,14 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 .pay-panel input{width:100%;margin-bottom:10px}
 .quick-cash{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
 .change-row{text-align:right;font-size:1rem;color:var(--mut)}
-.change-row b{color:var(--ok);font-family:"Gochi Hand",cursive;font-size:26px}
+.change-row b{color:var(--ok);font-family:var(--font-title,"Gochi Hand",cursive);font-size:26px}
 .sm-note{font-size:.78rem;margin-top:4px}
 .acct-info{background:var(--blue);border:2px solid var(--line);border-radius:var(--wob2);padding:10px 14px;
   margin-bottom:12px;font-size:.9rem;line-height:1.6;box-shadow:2px 2px 0 var(--shadow)}
 
 /* receipt — ALWAYS white paper, both modes, print-safe */
 .receipt{background:#fffdf6;color:#26221d;border:2.5px solid #26221d;border-radius:var(--wob1);
-  padding:22px 20px;font-family:"Gochi Hand","Consolas",cursive;font-size:.86rem;line-height:1.55;
+  padding:22px 20px;font-family:var(--font-title,"Consolas",cursive);font-size:.86rem;line-height:1.55;
   box-shadow:4px 4px 0 rgba(47,43,38,.7)}
 .receipt h2{text-align:center;font-size:1.15rem;letter-spacing:1px}
 .receipt .rc{text-align:center}
@@ -229,7 +269,7 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 /* toast */
 .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) rotate(-1deg);background:var(--mint);
   border:2.5px solid var(--line);color:var(--ink);padding:12px 26px;border-radius:var(--wob1);
-  font-family:"Gochi Hand",cursive;font-size:20px;box-shadow:4px 4px 0 var(--shadow);z-index:60;animation:pop .2s}
+  font-family:var(--font-title,"Gochi Hand",cursive);font-size:20px;box-shadow:4px 4px 0 var(--shadow);z-index:60;animation:pop .2s}
 .toast.err{background:var(--pink)}
 
 /* licensing */
@@ -245,10 +285,10 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 .license-chip.warn{color:var(--warn);background:var(--peach)}
 .license-chip.bad{color:var(--bad);background:var(--pink)}
 .check-overlay{position:fixed;inset:0;background:rgba(40,35,28,.75);z-index:70;display:flex;flex-direction:column;
-  gap:18px;align-items:center;justify-content:center;color:var(--ink);font-family:"Gochi Hand",cursive;font-size:24px}
+  gap:18px;align-items:center;justify-content:center;color:var(--ink);font-family:var(--font-title,"Gochi Hand",cursive);font-size:24px}
 .spinner{width:44px;height:44px;border-radius:var(--wob3);border:4px dashed var(--ink);animation:spin 1.2s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.code-out{font-family:"Gochi Hand",cursive;font-size:26px;letter-spacing:2px;background:var(--yellow);
+.code-out{font-family:var(--font-title,"Gochi Hand",cursive);font-size:26px;letter-spacing:2px;background:var(--yellow);
   border:2.5px dashed var(--line);border-radius:var(--wob2);padding:14px;margin:12px 0;text-align:center;color:var(--ink)}
 
 /* logo / cashiers */

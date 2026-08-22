@@ -159,6 +159,7 @@ async function handleApi(req, res, url) {
                address: String((b.store||{}).address||""), phone: String((b.store||{}).phone||""),
                gcash: String((b.store||{}).gcash||""), gcashName: String((b.store||{}).gcashName||""),
                qr: (b.store||{}).qr || "",
+               theme: String((b.store||{}).theme||"sketchy").slice(0,20),
                deliveryFee: Math.max(0, +((b.store||{}).deliveryFee) || 0) },
       products: (Array.isArray(b.products) ? b.products : []).slice(0, 500).map(p => ({
         name: String(p.name||"").slice(0,80), price: Math.max(0, +p.price || 0),
@@ -367,6 +368,7 @@ const server = http.createServer(async (req, res) => {
     if (p === "/admin") p = "/admin.html";
     if (p === "/shop" || p.startsWith("/shop/")) p = "/shop.html"; // public storefront
     if (p === "/buy") p = "/buy.html"; // public pricing page
+    if (p === "/preview") p = "/ui-preview.html"; // style preview
     const file = path.normalize(path.join(ROOT, p));
     if (!file.startsWith(ROOT) || file.startsWith(DATA_DIR)) { res.writeHead(403); return res.end("Forbidden"); }
     serveFile(res, file);

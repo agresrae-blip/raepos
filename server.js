@@ -366,6 +366,7 @@ const server = http.createServer(async (req, res) => {
     if (p === "/" ) p = "/index.html";
     if (p === "/admin") p = "/admin.html";
     if (p === "/shop" || p.startsWith("/shop/")) p = "/shop.html"; // public storefront
+    if (p === "/buy") p = "/buy.html"; // public pricing page
     const file = path.normalize(path.join(ROOT, p));
     if (!file.startsWith(ROOT) || file.startsWith(DATA_DIR)) { res.writeHead(403); return res.end("Forbidden"); }
     serveFile(res, file);

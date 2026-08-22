@@ -951,6 +951,8 @@ function loadSettingsForm(){
   $("#setPhone").value=settings.phone; $("#setCashier").value=settings.cashier;
   $("#setVat").value=settings.vat; $("#setFooter").value=settings.footer;
   $("#setMessenger").value=settings.messenger||"";
+  $("#setTagline").value=settings.tagline||"";
+  $("#setAnnounce").value=settings.announce||"";
   const a = settings.payAccounts || {};
   $("#setGcashNum").value=a.gcashNum||"";  $("#setGcashName").value=a.gcashName||"";
   $("#setMayaNum").value=a.mayaNum||"";    $("#setMayaName").value=a.mayaName||"";
@@ -962,7 +964,9 @@ $("#saveSettingsBtn").onclick = ()=>{
     name:$("#setName").value.trim()||"My Store", address:$("#setAddress").value.trim(),
     phone:$("#setPhone").value.trim(), cashier:$("#setCashier").value.trim()||"Cashier",
     vat:+$("#setVat").value||0, footer:$("#setFooter").value.trim(),
-    messenger:$("#setMessenger").value.trim()
+    messenger:$("#setMessenger").value.trim(),
+    tagline:$("#setTagline").value.trim(),
+    announce:$("#setAnnounce").value.trim()
   });
   settings.payAccounts = {
     gcashNum:$("#setGcashNum").value.trim(),  gcashName:$("#setGcashName").value.trim(),
@@ -1141,7 +1145,7 @@ function syncCatalog(){
     code: lic.code,
     online: !!settings.onlineStore,
     products: products.filter(p=>p.stock>0).map(p=>({name:p.name, price:p.price, emoji:p.emoji||"📦", stock:p.stock, img:p.img||""})),
-    store: { name:settings.name, logo:settings.logo||"", address:settings.address, phone:settings.phone, theme:settings.theme||"sketchy", font:settings.font||"doodle", messenger:settings.messenger||"",
+    store: { name:settings.name, logo:settings.logo||"", address:settings.address, phone:settings.phone, theme:settings.theme||"sketchy", font:settings.font||"doodle", messenger:settings.messenger||"", tagline:settings.tagline||"", announce:settings.announce||"",
              gcash:a.gcashNum||"", gcashName:a.gcashName||"", qr:settings.qr||"", deliveryFee:settings.deliveryFee||0 }
   }).catch(()=>{});
 }

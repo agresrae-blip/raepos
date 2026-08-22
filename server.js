@@ -225,6 +225,8 @@ async function handleApi(req, res, url) {
                theme: String((b.store||{}).theme||"sketchy").slice(0,20),
                font: String((b.store||{}).font||"doodle").slice(0,20),
                messenger: String((b.store||{}).messenger||"").slice(0,200),
+               tagline: String((b.store||{}).tagline||"").slice(0,120),
+               announce: String((b.store||{}).announce||"").slice(0,160),
                deliveryFee: Math.max(0, +((b.store||{}).deliveryFee) || 0) },
       products: (Array.isArray(b.products) ? b.products : []).slice(0, 500).map(p => ({
         name: String(p.name||"").slice(0,80), price: Math.max(0, +p.price || 0),

@@ -4,46 +4,60 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Online Store</title>
+<script>try{var t=localStorage.getItem("raepos_theme");if(t)document.documentElement.dataset.mode=t;}catch(e){}</script>
+<link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Patrick+Hand&family=Shantell+Sans:wght@800&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,sans-serif}
-body{background:#0b0f1d;color:#eef1fb;min-height:100vh;padding-bottom:90px}
+:root{--paper:#f8f5ee;--card:#fffdf6;--ink:#2f2b26;--mut:#7a7263;--line:#2f2b26;--shadow:rgba(47,43,38,.82);
+  --mint:#bfe8cf;--blue:#bcd9f7;--peach:#ffd9b8;--yellow:#fdf3b3;--pink:#f9cdd8;--okc:#1d6f43;
+  --wob1:255px 15px 225px 15px/15px 225px 15px 255px;--wob2:15px 255px 15px 225px/225px 15px 255px 15px;
+  --wob3:58% 42% 55% 45%/48% 60% 40% 52%}
+html[data-mode="dark"]{--paper:#211e1a;--card:#2b2723;--ink:#efe6d4;--mut:#a89d87;--line:#efe6d4;
+  --shadow:rgba(0,0,0,.55);--mint:#3e6b52;--blue:#3c5a7d;--peach:#8a5c33;--yellow:#7d6d2e;--pink:#7d4a58;--okc:#8fe0b1}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);min-height:100vh;padding-bottom:96px;
+  font-family:"Patrick Hand",cursive;font-size:18px;
+  background-image:radial-gradient(rgba(120,110,95,.28) 1.3px,transparent 1.3px);background-size:26px 26px}
 .wrap{max-width:640px;margin:0 auto;padding:20px 16px}
 .head{text-align:center;padding:18px 0 8px}
-.head img{width:74px;height:74px;object-fit:contain;border-radius:18px;background:#fff;padding:4px}
-.head h1{font-size:1.5rem;margin-top:10px}
-.head .sub{color:#8b93b5;font-size:.85rem;margin-top:4px}
-.err{background:rgba(255,84,112,.12);border:1px solid rgba(255,84,112,.4);border-radius:14px;padding:24px;text-align:center;color:#ffb3c2;margin-top:30px}
-.err h2{color:#fff;margin-bottom:6px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
-.item{background:#151c36;border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:14px;text-align:center;transition:.15s}
-.item:active{transform:scale(.97)}
+.head img{width:76px;height:76px;object-fit:contain;border-radius:var(--wob3);background:#fff;padding:4px;border:2.5px solid var(--line);box-shadow:3px 4px 0 var(--shadow)}
+.head h1{font-family:"Gochi Hand",cursive;font-size:2rem;margin-top:10px}
+.head .sub{color:var(--mut);font-size:.9rem;margin-top:4px}
+.err{background:var(--pink);border:2.5px solid var(--line);border-radius:var(--wob1);padding:24px;text-align:center;margin-top:30px;box-shadow:4px 4px 0 var(--shadow)}
+.err h2{margin-bottom:6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.item{background:var(--card);border:2.5px solid var(--line);border-radius:var(--wob1);padding:14px;text-align:center;transition:.12s;box-shadow:3px 4px 0 var(--shadow);cursor:pointer}
+.item:nth-child(even){border-radius:var(--wob2)}
+.item:active{transform:translate(2px,2px) rotate(-1deg);box-shadow:1px 1px 0 var(--shadow);background:var(--yellow)}
 .item .em{font-size:1.9rem}
-.item h4{font-size:.85rem;margin:6px 0;min-height:32px}
-.item .p{color:#00d4ff;font-weight:700}
-.item .s{color:#8b93b5;font-size:.68rem;margin-top:4px}
-.cartbar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#7c5cff,#00d4ff);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;border:none;width:100%;font-size:1rem;font-weight:700;cursor:pointer;z-index:5;box-shadow:0 -8px 30px rgba(0,0,0,.4)}
-.modal{position:fixed;inset:0;background:rgba(5,8,18,.75);z-index:10;display:flex;align-items:flex-end;justify-content:center}
-.sheet{background:#111731;width:100%;max-width:640px;border-radius:22px 22px 0 0;padding:22px 18px;max-height:88vh;overflow-y:auto}
-.sheet h3{margin-bottom:12px}
-.ci{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed rgba(255,255,255,.1);font-size:.9rem}
-.ci button{width:30px;height:30px;border-radius:9px;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:1.05rem;cursor:pointer}
-label{display:block;font-size:.75rem;color:#8b93b5;margin:10px 0 4px}
-input,textarea{width:100%;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);border-radius:12px;color:#eef1fb;padding:11px 13px;font-size:.95rem;outline:none;font-family:inherit}
-input:focus,textarea:focus{border-color:#7c5cff}
+.item h4{font-family:"Shantell Sans",cursive;font-weight:800;font-size:.82rem;margin:6px 0;min-height:32px}
+.item .p{font-family:"Gochi Hand",cursive;font-size:22px;color:var(--okc)}
+.item .s{color:var(--mut);font-size:.7rem;margin-top:4px}
+.cartbar{position:fixed;bottom:0;left:0;right:0;background:var(--yellow);color:var(--ink);border-top:2.5px solid var(--line);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;width:100%;font-family:"Gochi Hand",cursive;font-size:1.2rem;cursor:pointer;z-index:5;box-shadow:0 -5px 0 var(--shadow)}
+.modal{position:fixed;inset:0;background:rgba(40,35,28,.55);z-index:10;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:640px;border:2.5px solid var(--line);border-bottom:none;border-radius:24px 24px 0 0;padding:22px 18px;max-height:88vh;overflow-y:auto}
+.sheet h3{font-family:"Gochi Hand",cursive;font-size:1.4rem;margin-bottom:12px}
+.ci{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:2px dashed var(--mut);font-size:.95rem}
+.ci button{width:32px;height:32px;border-radius:var(--wob3);border:2px solid var(--line);background:var(--peach);color:var(--ink);font-size:1.1rem;cursor:pointer;box-shadow:2px 2px 0 var(--shadow)}
+label{display:block;font-size:.8rem;color:var(--mut);margin:10px 0 4px}
+input,textarea{width:100%;background:var(--card);border:2.5px solid var(--line);border-radius:var(--wob2);color:var(--ink);padding:11px 13px;font-size:.98rem;outline:none;font-family:"Patrick Hand",cursive}
+input:focus,textarea:focus{background:var(--yellow)}
 .pay{display:flex;gap:8px;margin:8px 0}
-.pay button{flex:1;padding:11px;border-radius:12px;border:2px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#eef1fb;font-size:.85rem;cursor:pointer}
-.pay button.sel{border-color:#00d4ff;background:rgba(0,212,255,.12)}
-.btn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#7c5cff,#00d4ff);color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
-.gnote{background:rgba(0,117,246,.1);border:1px solid rgba(0,117,246,.35);border-radius:12px;padding:10px 12px;font-size:.82rem;margin-top:8px;color:#a8c7ff}
+.pay button{flex:1;padding:11px;border-radius:var(--wob1);border:2.5px solid var(--line);background:var(--card);color:var(--ink);font-family:"Gochi Hand",cursive;font-size:.95rem;cursor:pointer;box-shadow:2px 2px 0 var(--shadow)}
+.pay button.sel{border-color:var(--line);background:var(--mint);transform:translate(2px,2px);box-shadow:0 0 0 var(--shadow)}
+.btn{width:100%;margin-top:14px;padding:14px;border:2.5px solid var(--line);border-radius:var(--wob1);background:var(--mint);color:var(--ink);font-family:"Gochi Hand",cursive;font-size:1.2rem;cursor:pointer;box-shadow:3px 3px 0 var(--shadow)}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--shadow)}
+.gnote{background:var(--blue);border:2px solid var(--line);border-radius:var(--wob2);padding:10px 12px;font-size:.85rem;margin-top:8px;box-shadow:2px 2px 0 var(--shadow)}
 .done{text-align:center;padding:40px 10px}
 .done .big{font-size:3rem}
-.done h2{margin:12px 0 6px}
-.done p{color:#8b93b5;font-size:.9rem}
-.totrow{display:flex;justify-content:space-between;font-size:1.05rem;font-weight:700;margin:12px 0}
+.done h2{font-family:"Gochi Hand",cursive;margin:12px 0 6px}
+.done p{color:var(--mut);font-size:.95rem}
+.totrow{display:flex;justify-content:space-between;font-family:"Gochi Hand",cursive;font-size:1.3rem;margin:12px 0;background:var(--mint);border:2.5px solid var(--line);border-radius:var(--wob2);padding:8px 14px}
+.themeFab{position:fixed;top:14px;right:14px;z-index:6;border:2.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:var(--wob1);padding:7px 14px;font-family:"Gochi Hand",cursive;font-size:1rem;cursor:pointer;box-shadow:2px 2px 0 var(--shadow)}
 .hidden{display:none}
 </style>
 </head>
 <body>
+<button class="themeFab" onclick="toggleTheme()">🌔</button>
 <div class="wrap">
   <div class="head" id="head"></div>
   <div id="content">
@@ -82,6 +96,12 @@ input:focus,textarea:focus{border-color:#7c5cff}
 
 <script>
 const $ = s => document.querySelector(s);
+function toggleTheme(){
+  const el = document.documentElement;
+  const next = el.dataset.mode === "dark" ? "light" : "dark";
+  el.dataset.mode = next;
+  try{ localStorage.setItem("raepos_theme", next); }catch(e){}
+}
 const peso = n => "₱" + (Math.round(n*100)/100).toLocaleString("en-PH",{minimumFractionDigits:2});
 const pathParts = location.pathname.split("/");
 const code = pathParts[2] || "";

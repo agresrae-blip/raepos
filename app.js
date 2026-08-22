@@ -240,6 +240,13 @@ $("#loginForm").addEventListener("submit", e=>{
   } else { $("#loginError").textContent = "Wrong PIN. Try again."; }
 });
 $("#logoutBtn").onclick = ()=>{ sessionStorage.removeItem("novapos_unlocked"); location.reload(); };
+$("#themeBtn").onclick = ()=>{
+  const el = document.documentElement;
+  const next = el.dataset.mode === "dark" ? "light" : "dark";
+  el.dataset.mode = next;
+  try{ localStorage.setItem("raepos_theme", next); }catch(e){}
+  toast(next === "dark" ? "Dark mode (chalkboard) on" : "Light mode (paper) on");
+};
 
 /* ---------- navigation ---------- */
 $$("#nav .nav-btn").forEach(b => b.onclick = async ()=>{

@@ -4,31 +4,51 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RaePOS — Get Your Plan</title>
+<script>try{var t=localStorage.getItem("raepos_theme");if(t)document.documentElement.dataset.mode=t;}catch(e){}</script>
+<link href="https://fonts.googleapis.com/css2?family=Gochi+Hand&family=Patrick+Hand&family=Shantell+Sans:wght@800&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,sans-serif}
-body{background:#0b0f1d;color:#eef1fb;min-height:100vh}
+:root{--paper:#f8f5ee;--card:#fffdf6;--ink:#2f2b26;--mut:#7a7263;--line:#2f2b26;--shadow:rgba(47,43,38,.82);
+  --mint:#bfe8cf;--blue:#bcd9f7;--peach:#ffd9b8;--yellow:#fdf3b3;--pink:#f9cdd8;
+  --wob1:255px 15px 225px 15px/15px 225px 15px 255px;--wob2:15px 255px 15px 225px/225px 15px 255px 15px;
+  --wob3:58% 42% 55% 45%/48% 60% 40% 52%}
+html[data-mode="dark"]{--paper:#211e1a;--card:#2b2723;--ink:#efe6d4;--mut:#a89d87;--line:#efe6d4;
+  --shadow:rgba(0,0,0,.55);--mint:#3e6b52;--blue:#3c5a7d;--peach:#8a5c33;--yellow:#7d6d2e;--pink:#7d4a58}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);min-height:100vh;font-family:"Patrick Hand",cursive;font-size:18px;
+  background-image:radial-gradient(rgba(120,110,95,.28) 1.3px,transparent 1.3px);background-size:26px 26px}
 .wrap{max-width:680px;margin:0 auto;padding:30px 18px 60px}
 .head{text-align:center;padding:10px 0 26px}
-.head .logo{width:80px;height:80px;border-radius:22px;background:linear-gradient(135deg,#7c5cff,#00d4ff);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px;color:#fff;font-weight:bold}
-h1{font-size:1.9rem}
-h1 b{background:linear-gradient(135deg,#7c5cff,#00d4ff);-webkit-background-clip:text;background-clip:text;color:transparent}
-.sub{color:#8b93b5;margin-top:8px;line-height:1.6}
-.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:24px;margin-bottom:16px}
-.card.best{border:2px solid #00d4ff;box-shadow:0 0 30px rgba(0,212,255,.2);position:relative}
-.best-tag{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7c5cff,#00d4ff);color:#fff;font-size:.72rem;font-weight:bold;padding:5px 16px;border-radius:99px;letter-spacing:1px}
-.price{font-size:2rem;font-weight:800;margin:6px 0 2px}
-.price small{font-size:.9rem;font-weight:400;color:#8b93b5}
-.per{color:#8b93b5;font-size:.85rem;margin-bottom:10px}
+.head .logo{width:84px;height:84px;border-radius:var(--wob3);background:var(--yellow);border:2.5px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-family:"Gochi Hand",cursive;font-size:40px;margin:0 auto 12px;
+  box-shadow:3px 4px 0 var(--shadow);transform:rotate(-3deg)}
+h1{font-family:"Gochi Hand",cursive;font-size:2.2rem}
+h1 b{color:var(--accent,#6b53c9)}
+.sub{color:var(--mut);margin-top:8px;line-height:1.6}
+.card{background:var(--card);border:2.5px solid var(--line);border-radius:var(--wob1);padding:24px;margin-bottom:18px;
+  box-shadow:5px 6px 0 var(--shadow);position:relative}
+.card:nth-child(even){border-radius:var(--wob2)}
+.card.best{border:3px solid var(--line);background:var(--mint);transform:rotate(-.5deg)}
+.best-tag{position:absolute;top:-16px;left:50%;transform:translateX(-50%) rotate(-2deg);background:var(--yellow);
+  border:2px solid var(--line);padding:4px 18px;font-family:"Gochi Hand",cursive;font-size:.8rem;border-radius:var(--wob1)}
+.price{font-family:"Gochi Hand",cursive;font-size:2.3rem;margin:6px 0 2px}
+.price small{font-size:1rem;color:var(--mut);font-family:"Patrick Hand"}
+.per{color:var(--mut);font-size:.9rem;margin-bottom:10px}
 ul{list-style:none;margin:10px 0}
-li{padding:5px 0;font-size:.9rem;color:#d5d9ee}
-li:before{content:"✅ ";font-size:.8rem}
-.buy{display:block;width:100%;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,#7c5cff,#00d4ff);color:#fff;font-size:1rem;font-weight:700;text-decoration:none;text-align:center;cursor:pointer}
-.buy:hover{filter:brightness(1.1)}
-.note{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.3);border-radius:14px;padding:14px 16px;font-size:.83rem;color:#a8c7dd;margin-top:18px;line-height:1.7}
-.foot{text-align:center;color:#8b93b5;font-size:.78rem;margin-top:30px;line-height:1.8}
+li{padding:5px 0;font-size:.95rem}
+.buy{display:block;width:100%;padding:15px;border:2.5px solid var(--line);border-radius:var(--wob1);background:var(--yellow);
+  color:var(--ink);font-family:"Gochi Hand",cursive;font-size:1.3rem;text-decoration:none;text-align:center;cursor:pointer;
+  box-shadow:3px 3px 0 var(--shadow)}
+.buy:hover{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
+.note{background:var(--blue);border:2px solid var(--line);border-radius:var(--wob2);padding:14px 16px;font-size:.9rem;
+  margin-top:18px;line-height:1.7;box-shadow:2px 2px 0 var(--shadow)}
+.foot{text-align:center;color:var(--mut);font-size:.85rem;margin-top:30px;line-height:1.9}
+.foot a{color:var(--accent,#6b53c9)}
+.themeFab{position:fixed;top:14px;right:14px;z-index:6;border:2.5px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:var(--wob1);padding:7px 14px;font-family:"Gochi Hand",cursive;font-size:1rem;cursor:pointer;box-shadow:2px 2px 0 var(--shadow)}
 </style>
 </head>
 <body>
+<button class="themeFab" onclick="toggleTheme()">🌔</button>
 <div class="wrap">
   <div class="head">
     <div class="logo">R</div>
@@ -87,5 +107,13 @@ li:before{content:"✅ ";font-size:.8rem}
     🛒 Subukan ang POS: <a href="https://raepos.onrender.com" style="color:#00d4ff;text-decoration:none">raepos.onrender.com</a>
   </div>
 </div>
+<script>
+function toggleTheme(){
+  const el = document.documentElement;
+  const next = el.dataset.mode === "dark" ? "light" : "dark";
+  el.dataset.mode = next;
+  try{ localStorage.setItem("raepos_theme", next); }catch(e){}
+}
+</script>
 </body>
 </html>

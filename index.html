@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RaePOS — Point of Sale</title>
 <link rel="stylesheet" href="style.css">
+<script>try{var t=localStorage.getItem("raepos_theme");if(t)document.documentElement.dataset.mode=t;}catch(e){}</script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -61,7 +62,7 @@
 <!-- BLOCKED (expired / revoked / cannot verify) -->
 <div id="blockedScreen" class="login-screen blocked hidden">
   <div class="login-card">
-    <div class="login-logo" style="background:linear-gradient(135deg,#ff5470,#c0294a)">⛔</div>
+    <div class="login-logo" style="background:var(--pink)">⛔</div>
     <h1 id="blockTitle">Access Locked</h1>
     <p class="login-sub" id="blockMsg">Your license is no longer valid.</p>
     <button id="retryBtn" class="btn-ghost btn-block">↻ Retry Check</button>
@@ -95,6 +96,7 @@
         <small>Cashier</small><strong id="footCashier">—</strong>
         <small>Shift started</small><strong id="footShift">—</strong>
       </div>
+      <button id="themeBtn" class="btn-block sm">🌗 Light / Dark</button>
       <button id="zBtn" class="btn-ghost btn-block" style="margin-bottom:8px">📊 Close Shift (Z)</button>
       <button id="logoutBtn" class="btn-ghost btn-block">🔒 Lock Register</button>
     </div>

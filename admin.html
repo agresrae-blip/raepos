@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RaePOS — Admin Console</title>
 <link rel="stylesheet" href="style.css">
+<script>try{var t=localStorage.getItem("raepos_theme");if(t)document.documentElement.dataset.mode=t;}catch(e){}</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
 </head>
 <body>
@@ -12,7 +13,7 @@
 <!-- ADMIN LOGIN -->
 <div id="adminLogin" class="login-screen">
   <div class="login-card">
-    <div class="login-logo" style="background:linear-gradient(135deg,#ff5470,#7c5cff)">🛡️</div>
+    <div class="login-logo">🛡️</div>
     <h1>Rae<span>POS</span> Admin</h1>
     <p class="login-sub">Owner console — licenses & monitoring</p>
     <form id="adminLoginForm">
@@ -28,13 +29,14 @@
 <!-- ADMIN DASHBOARD -->
 <div id="adminApp" class="app hidden">
   <aside class="sidebar">
-    <div class="brand"><span class="brand-mark" style="background:linear-gradient(135deg,#ff5470,#7c5cff)">🛡️</span><span class="brand-name">Rae<b>Admin</b></span></div>
+    <div class="brand"><span class="brand-mark">🛡️</span><span class="brand-name">Rae<b>Admin</b></span></div>
     <nav id="nav">
       <button class="nav-btn active" data-page="licenses">🔑 <span>Licenses</span></button>
       <button class="nav-btn" data-page="account">👤 <span>Account</span></button>
       <button class="nav-btn" onclick="window.open('/','_blank')">🛒 <span>Open POS</span></button>
     </nav>
     <div class="sidebar-foot">
+      <button id="themeBtn" class="btn-block sm" style="margin-bottom:8px">🌗 Light / Dark</button>
       <div class="shift-info"><small>Monitoring</small><strong id="footRefresh">auto every 30s</strong></div>
       <button id="adminLogout" class="btn-ghost btn-block">Log Out</button>
     </div>

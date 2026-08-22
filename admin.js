@@ -41,6 +41,12 @@ function logout(){
   $("#adminPass").value = ""; $("#adminLoginErr").textContent = "";
 }
 $("#adminLogout").onclick = logout;
+$("#themeBtn").onclick = ()=>{
+  const el = document.documentElement;
+  const next = el.dataset.mode === "dark" ? "light" : "dark";
+  el.dataset.mode = next;
+  try{ localStorage.setItem("raepos_theme", next); }catch(e){}
+};
 if (token) enter(); // auto-resume
 
 /* ---------- nav ---------- */

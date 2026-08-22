@@ -249,7 +249,7 @@ async function handleApi(req, res, url) {
     return send(res, 200, { ok: true,
       store: { name: st.name || "Store", phone: st.phone || "", logo: st.logo || "" },
       order: { id: o.id, ts: o.ts, items: o.items, itemsTotal: o.itemsTotal, fee: o.fee,
-               total: o.total, payment: o.payment, status: o.status, customerName: o.customer.name } });
+               total: o.total, payment: o.payment, status: o.status, refundRef: o.refundRef || "", customerName: o.customer.name } });
   }
 
   // public: storefront data
@@ -318,6 +318,15 @@ async function handleApi(req, res, url) {
       const arr2 = arr.filter(x => x.id !== b.orderId);
       writeOrders(c.id, arr2);
       return send(res, 200, { ok: true, deleted: true });
+    }
+    if (b.action === "reject" && o.payment === "GCash")
+      return send(res, 400, { ok: false, error: "Customer already PAID via GCash. Use 'Cancel & Refund' and enter the refund reference." });
+    if (b.action === "reject_refund") {
+      if (String(b.refundRef || "").trim().length < 4)
+        return send(res, 400, { ok: false, error: "Enter the GCash refund reference number (4+ characters)." });
+      o.status = "rejected"; o.refundRef = String(b.refundRef).trim().slice(0, 40);
+      writeOrders(c.id, arr);
+      return send(res, 200, { ok: true, order: o });
     }
     if (!map[b.action]) return send(res, 400, { ok: false, error: "Unknown action" });
     o.status = map[b.action];

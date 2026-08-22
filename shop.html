@@ -147,6 +147,8 @@ function trackPage(){
           <div style="font-size:3rem">${S[0]}</div>
           <h2 style="color:#fff">${S[1]}</h2>
           <p style="color:#8b93b5">Order <b style="color:#fff">${d.order.id}</b> · ${new Date(d.order.ts).toLocaleString("en-PH")}</p>
+          ${d.order.status==="rejected" && d.order.refundRef ? `<p style="color:#8fe0b1;margin-top:6px">💰 GCash refund sent — reference: <b>${d.order.refundRef}</b></p>`:""}
+          ${d.order.status==="rejected" && d.order.payment==="GCash" && !d.order.refundRef ? `<p style="color:#f2c979;margin-top:6px">Your GCash payment will be refunded — please contact the store.</p>`:""}
         </div>
         <div class="sheet" style="position:static;max-width:100%;margin-top:14px">
           ${d.order.items.map(i=>`<div class="ci"><span>${i.qty}× ${i.name}</span><span>${peso(i.qty*i.price)}</span></div>`).join("")}

@@ -1213,7 +1213,9 @@ function renderOrders(){
       <button class="btn-ghost sm" data-track="${o.id}">🔗 Copy Track Link</button>
       ${o.status==="new"?`
         <button class="btn-primary sm" data-ord="accept" data-oid="${o.id}">✔ Accept</button>
-        <button class="btn-danger sm" data-ord="reject" data-oid="${o.id}">✖ Reject</button>`:""}
+        ${o.payment==="GCash"
+          ? `<button class="btn-danger sm" data-ord="rejectrefund" data-oid="${o.id}">💰 Cancel &amp; Refund</button>`
+          : `<button class="btn-danger sm" data-ord="reject" data-oid="${o.id}">✖ Reject</button>`}`:""}
       ${o.status==="preparing"?`<button class="btn-primary sm" data-ord="deliver" data-oid="${o.id}">🛵 Out for Delivery</button>`:""}
       ${o.status==="delivering"?`<button class="btn-primary sm" data-ord="complete" data-oid="${o.id}">✅ Delivered &amp; Paid</button>`:""}
       ${(o.status==="done"||o.status==="rejected")?`<button class="btn-danger sm" data-delord="${o.id}">🗑</button>`:""}
@@ -1237,11 +1239,19 @@ function renderOrders(){
   });
 }
 async function orderAction(oid, action){
+  let refundRefVar = "";
   const lic = DB.get("license", null);
   if(!lic) return;
   if(action==="reject" && !confirm(`Reject order ${oid}?`)) return;
+  if(action==="rejectrefund"){
+    const ref = await inputModal("Customer PAID via GCash. Refund them in GCash first, then enter the REFUND reference number:", "GCash refund reference");
+    if(ref === null || ref.length < 4){ if(ref !== null) toast("Enter the refund reference (4+ chars)", true); return; }
+    if(!confirm("Confirm: GCash refund done and order will be cancelled?")) return;
+    action = "reject_refund";
+    refundRefVar = ref;
+  }
   try{
-    const r = await licApi("orderupdate", { code: lic.code, orderId: oid, action });
+    const r = await licApi("orderupdate", { code: lic.code, orderId: oid, action, refundRef: refundRefVar });
     if(!r.ok){ toast(r.error || "Order update failed", true); return; }
     if(action==="accept"){
       const o = onlineOrders.find(x=>x.id===oid);

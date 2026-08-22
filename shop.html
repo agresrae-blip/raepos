@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Store</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",system-ui,sans-serif}
+body{background:#0b0f1d;color:#eef1fb;min-height:100vh;padding-bottom:90px}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px}
+.head{text-align:center;padding:18px 0 8px}
+.head img{width:74px;height:74px;object-fit:contain;border-radius:18px;background:#fff;padding:4px}
+.head h1{font-size:1.5rem;margin-top:10px}
+.head .sub{color:#8b93b5;font-size:.85rem;margin-top:4px}
+.err{background:rgba(255,84,112,.12);border:1px solid rgba(255,84,112,.4);border-radius:14px;padding:24px;text-align:center;color:#ffb3c2;margin-top:30px}
+.err h2{color:#fff;margin-bottom:6px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.item{background:#151c36;border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:14px;text-align:center;transition:.15s}
+.item:active{transform:scale(.97)}
+.item .em{font-size:1.9rem}
+.item h4{font-size:.85rem;margin:6px 0;min-height:32px}
+.item .p{color:#00d4ff;font-weight:700}
+.item .s{color:#8b93b5;font-size:.68rem;margin-top:4px}
+.cartbar{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#7c5cff,#00d4ff);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;border:none;width:100%;font-size:1rem;font-weight:700;cursor:pointer;z-index:5;box-shadow:0 -8px 30px rgba(0,0,0,.4)}
+.modal{position:fixed;inset:0;background:rgba(5,8,18,.75);z-index:10;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#111731;width:100%;max-width:640px;border-radius:22px 22px 0 0;padding:22px 18px;max-height:88vh;overflow-y:auto}
+.sheet h3{margin-bottom:12px}
+.ci{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed rgba(255,255,255,.1);font-size:.9rem}
+.ci button{width:30px;height:30px;border-radius:9px;border:none;background:rgba(255,255,255,.1);color:#fff;font-size:1.05rem;cursor:pointer}
+label{display:block;font-size:.75rem;color:#8b93b5;margin:10px 0 4px}
+input,textarea{width:100%;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.12);border-radius:12px;color:#eef1fb;padding:11px 13px;font-size:.95rem;outline:none;font-family:inherit}
+input:focus,textarea:focus{border-color:#7c5cff}
+.pay{display:flex;gap:8px;margin:8px 0}
+.pay button{flex:1;padding:11px;border-radius:12px;border:2px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#eef1fb;font-size:.85rem;cursor:pointer}
+.pay button.sel{border-color:#00d4ff;background:rgba(0,212,255,.12)}
+.btn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#7c5cff,#00d4ff);color:#fff;font-size:1rem;font-weight:700;cursor:pointer}
+.gnote{background:rgba(0,117,246,.1);border:1px solid rgba(0,117,246,.35);border-radius:12px;padding:10px 12px;font-size:.82rem;margin-top:8px;color:#a8c7ff}
+.done{text-align:center;padding:40px 10px}
+.done .big{font-size:3rem}
+.done h2{margin:12px 0 6px}
+.done p{color:#8b93b5;font-size:.9rem}
+.totrow{display:flex;justify-content:space-between;font-size:1.05rem;font-weight:700;margin:12px 0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head" id="head"></div>
+  <div id="content">
+    <div class="err hidden" id="offBox"><h2>😴 Store is closed</h2>This store is not accepting online orders right now. Check back later!</div>
+    <div class="grid" id="grid"></div>
+  </div>
+  <div id="doneBox" class="done hidden"></div>
+</div>
+
+<button id="cartbar" class="cartbar hidden" onclick="openCart()"><span>🛒 View cart</span><span id="cartTotal">₱0.00</span></button>
+
+<div id="cartModal" class="modal hidden" onclick="if(event.target===this)closeCart()">
+  <div class="sheet">
+    <h3>🛒 Your Order</h3>
+    <div id="cartItems"></div>
+    <div class="ci" style="border-bottom:none"><span style="color:#8b93b5">Items subtotal</span><span id="itemsSub">₱0.00</span></div>
+    <div class="ci"><span style="color:#8b93b5">📦 Delivery fee</span><span id="feeOut">₱0.00</span></div>
+    <div class="totrow"><span>Total</span><span id="cartTotal2">₱0.00</span></div>
+    <h3 style="margin-top:16px">📦 Delivery Details</h3>
+    <label>Your Name *</label><input id="fName" placeholder="e.g. Juan Dela Cruz">
+    <label>Mobile Number *</label><input id="fPhone" placeholder="09xx xxx xxxx" inputmode="tel">
+    <label>Delivery Address *</label><textarea id="fAddr" rows="2" placeholder="House #, Street, Barangay"></textarea>
+    <label>Notes for the store (optional)</label><input id="fNotes" placeholder="e.g. extra ice, call on arrival">
+    <label>Payment Method</label>
+    <div class="pay">
+      <button id="payCod" class="sel" onclick="setPay('COD')">💵 Cash on Delivery</button>
+      <button id="payGcash" onclick="setPay('GCash')">🔵 GCash</button>
+    </div>
+    <div id="gcashBox" class="gnote hidden"></div>
+    <label id="refLbl" class="hidden">GCash Reference Number (type "NONE" if paying on arrival)</label>
+    <input id="fRef" class="hidden" placeholder="e.g. 9021 4588 1122">
+    <button class="btn" onclick="placeOrder()">Place Order ▸</button>
+    <p id="formErr" style="color:#ff5470;font-size:.8rem;margin-top:8px;text-align:center"></p>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const peso = n => "₱" + (Math.round(n*100)/100).toLocaleString("en-PH",{minimumFractionDigits:2});
+const code = location.pathname.split("/")[2] || "";
+let store = null, items = [], cart = {}, pay = "COD";
+
+fetch("/api/shop/" + encodeURIComponent(code)).then(r=>r.json()).then(d=>{
+  if(!d.ok){ $("#offBox").classList.remove("hidden"); return; }
+  store = d.store; items = d.products;
+  $("#head").innerHTML = (store.logo?`<img src="${store.logo}" alt="logo">`:"") +
+    `<h1>${store.name}</h1><div class="sub">Order online — we deliver!${store.phone?" · 📞 "+store.phone:""}</div>`;
+  renderGrid();
+}).catch(()=>{ $("#offBox").classList.remove("hidden"); });
+
+function renderGrid(){
+  $("#grid").innerHTML = items.map(p=>`
+    <div class="item" onclick="add('${p.name.replace(/'/g,"\\'")}')">
+      <div class="em">${p.emoji}</div><h4>${p.name}</h4>
+      <div class="p">${peso(p.price)}</div><div class="s">${p.stock} available</div>
+    </div>`).join("");
+}
+function add(name){
+  const p = items.find(x=>x.name===name);
+  if((cart[name]||0) >= p.stock) return;
+  cart[name] = (cart[name]||0) + 1; cartUI();
+}
+function qty(name, d){
+  cart[name] = (cart[name]||0) + d;
+  if(cart[name] <= 0) delete cart[name];
+  cartUI(); if(!Object.keys(cart).length) closeCart();
+}
+function cartSum(){ return items.reduce((a,p)=>a + (cart[p.name]||0)*p.price, 0); }
+function cartCount(){ return Object.values(cart).reduce((a,b)=>a+b, 0); }
+function cartUI(){
+  const sub = cartSum();
+  const fee = store ? (+store.deliveryFee || 0) : 0;
+  const t = peso(sub + fee);
+  $("#cartTotal").textContent = t;
+  $("#itemsSub").textContent = peso(sub);
+  $("#feeOut").textContent = peso(fee);
+  $("#cartTotal2").textContent = t;
+  $("#cartbar").classList.toggle("hidden", !cartCount());
+  $("#cartItems").innerHTML = items.filter(p=>cart[p.name]).map(p=>`
+    <div class="ci"><span>${p.emoji} ${p.name}<br><small style="color:#8b93b5">${peso(p.price)} each</small></span>
+      <span><button onclick="qty('${p.name.replace(/'/g,"\\'")}',-1)">−</button> <b>${cart[p.name]}</b>
+      <button onclick="qty('${p.name.replace(/'/g,"\\'")}',1)">＋</button></span></div>`).join("");
+}
+function openCart(){ if(!cartCount()) return; cartUI(); $("#cartModal").classList.remove("hidden"); $("#formErr").textContent=""; }
+function closeCart(){ $("#cartModal").classList.add("hidden"); }
+function setPay(p){
+  pay = p;
+  $("#payCod").classList.toggle("sel", p==="COD");
+  $("#payGcash").classList.toggle("sel", p==="GCash");
+  $("#gcashBox").classList.toggle("hidden", p!=="GCash");
+  $("#refLbl").classList.toggle("hidden", p!=="GCash");
+  $("#fRef").classList.toggle("hidden", p!=="GCash");
+  if(p==="GCash" && store){
+    $("#gcashBox").innerHTML =
+      (store.qr ? `<img src="${store.qr}" alt="GCash QR" style="width:100%;max-width:230px;border-radius:14px;background:#fff;padding:10px;display:block;margin:0 auto 8px">` : "") +
+      (store.gcash
+        ? `Scan this QR with your GCash app or send to: <b>${store.gcash}</b>${store.gcashName?" — "+store.gcashName:""}`
+        : "Send your GCash payment to the number the store gives you, then enter the reference number.");
+  }
+}
+async function placeOrder(){
+  const name = $("#fName").value.trim(), phone = $("#fPhone").value.trim(), addr = $("#fAddr").value.trim();
+  if(!name || !phone || !addr){ $("#formErr").textContent = "Please fill in your name, mobile number and delivery address."; return; }
+  const body = {
+    customer: { name, phone, address: addr, notes: $("#fNotes").value.trim() },
+    items: Object.entries(cart).map(([n,q])=>({name:n, qty:q})),
+    payment: pay, ref: $("#fRef").value.trim()
+  };
+  const btn = document.querySelector(".btn"); btn.disabled = true; btn.textContent = "Sending…";
+  try{
+    const r = await fetch(`/api/shop/${encodeURIComponent(code)}/order`, {
+      method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
+    }).then(x=>x.json());
+    if(!r.ok){ $("#formErr").textContent = r.error || "Could not place order."; btn.disabled = false; btn.textContent = "Place Order ▸"; return; }
+    closeCart();
+    $("#content").classList.add("hidden");
+    const d = $("#doneBox"); d.classList.remove("hidden");
+    d.innerHTML = `<div class="big">✅</div><h2>Order placed!</h2>
+      <p>Order <b>${r.orderId}</b> — total <b>${peso(r.total)}</b><br>
+      ${pay==="COD"?"Pay cash on delivery.":"Pay via GCash now if you haven't yet."}<br>
+      The store will confirm your order soon. Thank you! 💙</p>`;
+  }catch(e){
+    $("#formErr").textContent = "Connection problem — please try again.";
+    btn.disabled = false; btn.textContent = "Place Order ▸";
+  }
+}
+</script>
+</body>
+</html>

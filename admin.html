@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaePOS — Admin Console</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+</head>
+<body>
+
+<!-- ADMIN LOGIN -->
+<div id="adminLogin" class="login-screen">
+  <div class="login-card">
+    <div class="login-logo" style="background:linear-gradient(135deg,#ff5470,#7c5cff)">🛡️</div>
+    <h1>Rae<span>POS</span> Admin</h1>
+    <p class="login-sub">Owner console — licenses & monitoring</p>
+    <form id="adminLoginForm">
+      <label>Admin Password</label>
+      <input type="password" id="adminPass" style="letter-spacing:normal;font-size:1rem" placeholder="••••••••" autocomplete="off" required>
+      <button type="submit" class="btn-primary btn-block">Sign In</button>
+      <p id="adminLoginErr" class="login-error"></p>
+    </form>
+  </div>
+  <div class="login-orbs orb1"></div><div class="login-orbs orb2"></div><div class="login-orbs orb3"></div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="adminApp" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark" style="background:linear-gradient(135deg,#ff5470,#7c5cff)">🛡️</span><span class="brand-name">Rae<b>Admin</b></span></div>
+    <nav id="nav">
+      <button class="nav-btn active" data-page="licenses">🔑 <span>Licenses</span></button>
+      <button class="nav-btn" data-page="account">👤 <span>Account</span></button>
+      <button class="nav-btn" onclick="window.open('/','_blank')">🛒 <span>Open POS</span></button>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="shift-info"><small>Monitoring</small><strong id="footRefresh">auto every 30s</strong></div>
+      <button id="adminLogout" class="btn-ghost btn-block">Log Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- LICENSES -->
+    <section id="page-licenses" class="page active">
+      <header class="page-head">
+        <h2>License Management</h2>
+        <button id="newCodeBtn" class="btn-primary">＋ Generate Activation Code</button>
+      </header>
+      <div class="stat-grid">
+        <div class="stat-card c1"><small>Total Codes</small><strong id="stTotal">0</strong><span>generated all time</span></div>
+        <div class="stat-card c3"><small>Active Clients</small><strong id="stActive">0</strong><span>currently licensed</span></div>
+        <div class="stat-card c4"><small>Online Now</small><strong id="stOnline">0</strong><span>seen in last 10 min</span></div>
+        <div class="stat-card c2"><small>Expired / Revoked</small><strong id="stDead">0</strong><span>needs renewal or action</span></div>
+      </div>
+      <div class="panel hidden" id="expiringPanel" style="border-color:rgba(255,176,32,.45)">
+        <h3>⏳ Expiring Soon — chase these renewals</h3>
+        <div id="expiringList"></div>
+      </div>
+      <div class="panel table-panel">
+        <table class="data-table">
+          <thead><tr>
+            <th>Code</th><th>Plan</th><th>Status</th><th>Client / Store</th>
+            <th>Activated</th><th>Expires</th><th>Last Access</th><th>Client Sales</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="codesBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ACCOUNT -->
+    <section id="page-account" class="page">
+      <header class="page-head"><h2>Account</h2></header>
+      <div class="settings-grid">
+        <div class="panel">
+          <h3>🔑 Change Admin Password</h3>
+          <label>Current Password</label><input type="password" id="pwCur">
+          <label>New Password (min 6 chars)</label><input type="password" id="pwNew">
+          <button id="pwSave" class="btn-primary btn-block">Update Password</button>
+        </div>
+        <div class="panel">
+          <h3>💾 Backup &amp; Restore</h3>
+          <p class="muted">Download a backup <b>after every new client</b> — it contains all activation codes, client data, sales and orders. If the server is ever wiped, restore this one file and everything returns.</p>
+          <button id="backupBtn" class="btn-primary btn-block">⬇ Download Backup Now</button>
+          <hr class="sep">
+          <label>Restore from backup file</label>
+          <input type="file" id="restoreFile" accept=".json,application/json">
+          <button id="restoreBtn" class="btn-danger btn-block" style="margin-top:8px">⚠️ Restore (overwrites server data)</button>
+        </div>
+        <div class="panel">
+          <h3>ℹ️ How selling works</h3>
+          <p class="muted" style="line-height:1.8">
+            1. Generate a code → give it to your client with the POS link.<br>
+            2. Client opens the POS, enters the code + their store name once.<br>
+            3. You watch <b>Last Access</b> here — every time the POS opens, it checks in.<br>
+            4. Client didn't pay? Press <b>Revoke</b> — their POS locks immediately.<br>
+            5. Trial codes start counting down on the day the client activates.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- CREATE CODE MODAL -->
+<div id="codeModal" class="modal hidden">
+  <div class="modal-card">
+    <h3>Generate Activation Code</h3>
+    <label>Plan Type</label>
+    <select id="cmType">
+      <option value="subscription">Subscription / Trial (limited days)</option>
+      <option value="lifetime">Lifetime Access (one-time payment)</option>
+    </select>
+    <div id="cmDaysWrap">
+      <label>Valid For (days from activation)</label>
+      <div class="quick-cash" style="margin-bottom:4px">
+        <button class="chip" data-days="3">3-day trial</button>
+        <button class="chip" data-days="7">7 days</button>
+        <button class="chip" data-days="30">30 days</button>
+        <button class="chip" data-days="365">1 year</button>
+      </div>
+      <input type="number" id="cmDays" value="30" min="1" max="3650">
+    </div>
+    <label>Note (client name, price paid — only you see this)</label>
+    <input id="cmNote" placeholder="e.g. Aling Nena Store — paid ₱2,500">
+    <div class="modal-actions">
+      <button class="btn-ghost" data-close>Cancel</button>
+      <button id="cmCreate" class="btn-primary">Generate</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEW CODE RESULT MODAL -->
+<div id="resultModal" class="modal hidden">
+  <div class="modal-card" style="text-align:center">
+    <h3>✅ Code Generated</h3>
+    <p class="muted">Send this to your client:</p>
+    <div id="newCodeOut" class="code-out">NOVA-XXXX-XXXX-XXXX</div>
+    <div class="modal-actions" style="justify-content:center">
+      <button id="copyCodeBtn" class="btn-primary">📋 Copy Code</button>
+      <button class="btn-ghost" data-close>Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+<script src="admin.js"></script>
+</body>
+</html>

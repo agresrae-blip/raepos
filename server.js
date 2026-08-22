@@ -311,6 +311,26 @@ async function handleApi(req, res, url) {
     return send(res, 200, { ok: true, codes: db.codes.length, files });
   }
 
+  /* device migration: old device uploads its store, new device downloads it */
+  if (route === "/api/transfer" && req.method === "POST") {
+    const b = await readBody(req, 25e6);
+    const c = db.codes.find(x => x.code === String(b.code || "").trim().toUpperCase());
+    if (!c) return send(res, 404, { ok: false, error: "License not found." });
+    if (c.revoked) return send(res, 403, { ok: false, error: "Revoked." });
+    if (!Array.isArray(b.products)) return send(res, 400, { ok: false, error: "No products in upload." });
+    c.transfer = { savedAt: Date.now(), products: b.products.slice(0, 1000), settings: b.settings || {} };
+    save();
+    return send(res, 200, { ok: true, count: c.transfer.products.length });
+  }
+  if (route === "/api/transfer/get" && req.method === "POST") {
+    const b = await readBody(req);
+    const c = db.codes.find(x => x.code === String(b.code || "").trim().toUpperCase());
+    if (!c) return send(res, 404, { ok: false, error: "License not found." });
+    if (c.revoked) return send(res, 403, { ok: false, error: "Revoked." });
+    if (!c.transfer) return send(res, 404, { ok: false, error: "No data uploaded from the old device yet." });
+    return send(res, 200, { ok: true, savedAt: c.transfer.savedAt, products: c.transfer.products, settings: c.transfer.settings });
+  }
+
   return send(res, 404, { ok: false, error: "Unknown endpoint" });
 }
 

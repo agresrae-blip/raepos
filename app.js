@@ -564,6 +564,97 @@ function renderInventory(){
   });
 }
 $("#invSearch").oninput = renderInventory;
+
+/* ---------- CSV import / export of products ---------- */
+function csvCell(v){ return '"' + String(v == null ? "" : v).replace(/"/g,'""') + '"'; }
+$("#exportInvBtn").onclick = ()=>{
+  const NL = String.fromCharCode(10);
+  let csv = "name,category,price,cost,stock,low,barcode" + NL;
+  products.forEach(p => { csv += [p.name, p.cat, p.price, p.cost||0, p.stock, p.low||0, p.barcode||""].map(csvCell).join(",") + NL; });
+  download("raepos-products-" + todayStr() + ".csv", csv, "text/csv");
+  toast(products.length + " products exported");
+};
+function parseCSV(text){
+  const NL = String.fromCharCode(10), CR = String.fromCharCode(13);
+  const rows = []; let row = [], cell = "", inQ = false;
+  for(let i = 0; i < text.length; i++){
+    const ch = text[i];
+    if(inQ){
+      if(ch === '"'){ if(text[i+1] === '"'){ cell += '"'; i++; } else inQ = false; }
+      else cell += ch;
+    } else {
+      if(ch === '"') inQ = true;
+      else if(ch === ","){ row.push(cell); cell = ""; }
+      else if(ch === NL || ch === CR){ if(ch === CR && text[i+1] === NL) i++; row.push(cell); cell = ""; if(row.some(c=>c !== "")) rows.push(row); row = []; }
+      else cell += ch;
+    }
+  }
+  row.push(cell); if(row.some(c=>c !== "")) rows.push(row);
+  return rows;
+}
+$("#importInvBtn").onclick = ()=> $("#importInvFile").click();
+$("#importInvFile").addEventListener("change", async e=>{
+  const f = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if(!f) return;
+  if(currentUser().role !== "owner" && !await ownerGate("Importing products requires the OWNER PIN")) return;
+  try{
+    const rows = parseCSV(await f.text());
+    if(rows.length < 2){ toast("The CSV file is empty", true); return; }
+    const head = rows[0].map(h=>h.trim().toLowerCase());
+    const iName = head.indexOf("name"), iCat = head.indexOf("category"), iPrice = head.indexOf("price"),
+          iCost = head.indexOf("cost"), iStock = head.indexOf("stock"), iLow = head.indexOf("low"),
+          iBar = head.indexOf("barcode");
+    if(iName < 0 || iPrice < 0){ toast("CSV needs 'name' and 'price' columns", true); return; }
+    let added = 0, updated = 0;
+    rows.slice(1).forEach(r=>{
+      const name = (r[iName]||"").trim(); if(!name) return;
+      const price = parseFloat(r[iPrice]) || 0; if(price <= 0) return;
+      const existing = products.find(p=>p.name.toLowerCase() === name.toLowerCase());
+      const info = {
+        cat: iCat >= 0 ? (r[iCat]||"Misc").trim() : "Misc",
+        price, cost: iCost >= 0 ? (parseFloat(r[iCost])||0) : 0,
+        stock: iStock >= 0 ? (parseInt(r[iStock])||0) : 0,
+        low: iLow >= 0 ? (parseInt(r[iLow])||5) : 5,
+        barcode: iBar >= 0 ? (r[iBar]||"").trim() : ""
+      };
+      if(existing){ Object.assign(existing, info); updated++; }
+      else { products.push(Object.assign({ id:uid(), name, emoji:EMOJIS[Math.floor(Math.random()*EMOJIS.length)] }, info)); added++; }
+    });
+    if(!added && !updated){ toast("Nothing imported — check the file", true); return; }
+    saveProducts(); syncCatalog(); refreshCats();
+    renderInventory(); renderProducts(); renderDashboard();
+    toast("Imported: " + added + " new, " + updated + " updated");
+  }catch(err){ toast("Could not read that CSV file", true); }
+});
+
+/* ---------- move to a new device ---------- */
+$("#transferUpBtn").onclick = async ()=>{
+  if(currentUser().role !== "owner" && !await ownerGate("Uploading for transfer requires the OWNER PIN")) return;
+  const lic = DB.get("license", null);
+  if(!lic) return toast("No license on this device", true);
+  const btn = $("#transferUpBtn"); btn.disabled = true; btn.textContent = "Uploading…";
+  try{
+    const r = await licApi("transfer", { code: lic.code, products, settings });
+    if(r.ok) toast("Uploaded " + r.count + " products! On the new device: Settings > Load Data");
+    else toast(r.error || "Upload failed", true);
+  }catch(e){ toast("Connection problem", true); }
+  btn.disabled = false; btn.textContent = "Upload My Data for Transfer";
+};
+$("#transferDownBtn").onclick = async ()=>{
+  if(currentUser().role !== "owner" && !await ownerGate("Loading from your old device requires the OWNER PIN")) return;
+  const lic = DB.get("license", null);
+  if(!lic) return toast("No license on this device", true);
+  if(!confirm("Replace THIS device's products and store settings with the data from your old device? Current data will be overwritten.")) return;
+  try{
+    const r = await licApi("transfer/get", { code: lic.code });
+    if(!r.ok) return toast(r.error || "Nothing found", true);
+    products = r.products; saveProducts();
+    if(r.settings && Object.keys(r.settings).length){ Object.assign(settings, r.settings); saveSettings(); }
+    toast("Data loaded — reloading…");
+    setTimeout(()=>location.reload(), 1200);
+  }catch(e){ toast("Connection problem", true); }
+};
 $("#addProductBtn").onclick = ()=>openProductModal(null);
 
 let pmImgData = "";

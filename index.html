@@ -172,6 +172,9 @@
         <h2>Inventory</h2>
         <div>
           <input type="search" id="invSearch" placeholder="Search products…" class="mr">
+          <button id="exportInvBtn" class="btn-ghost">⬇ Export CSV</button>
+          <button id="importInvBtn" class="btn-ghost mr">⬆ Import CSV</button>
+          <input type="file" id="importInvFile" accept=".csv,text/csv" class="hidden">
           <button id="addProductBtn" class="btn-primary">＋ Add Product</button>
         </div>
       </header>
@@ -272,6 +275,11 @@
           <h3>🔑 License</h3>
           <div id="licenseInfo" class="muted" style="line-height:1.9;margin-bottom:8px">—</div>
           <button id="deactivateBtn" class="btn-ghost btn-block">Deactivate on this device</button>
+          <hr class="sep">
+          <h3>📱 Move to a New Device</h3>
+          <p class="muted">Got a new phone or computer? On the <b>OLD device</b>: press Upload. Then on the <b>NEW device</b>: activate with the same code, come here and press Load.</p>
+          <button id="transferUpBtn" class="btn-primary btn-block">📤 Upload My Data for Transfer</button>
+          <button id="transferDownBtn" class="btn-ghost btn-block" style="margin-top:8px">📥 Load Data from My Old Device</button>
           <hr class="sep">
           <h3>💬 Support & Contacts</h3>
           <div id="settingsContacts" class="contact-col"></div>

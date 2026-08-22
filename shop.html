@@ -150,7 +150,8 @@ function trackPage(){
           <h2 style="color:#fff">${S[1]}</h2>
           <p style="color:#8b93b5">Order <b style="color:#fff">${d.order.id}</b> · ${new Date(d.order.ts).toLocaleString("en-PH")}</p>
           ${d.order.status==="rejected" && d.order.refundRef ? `<p style="color:#8fe0b1;margin-top:6px">💰 GCash refund sent — reference: <b>${d.order.refundRef}</b></p>`:""}
-          ${d.order.payment==="GCash" ? `
+          ${d.order.payment==="GCash" && !d.order.qrOpen && d.order.status!=="rejected" ? `<p style="color:var(--mut);font-size:.82rem;margin-top:10px">💱 GCash scan-to-pay will appear here when your order arrives.</p>`:""}
+          ${d.order.payment==="GCash" && d.order.qrOpen ? `
           <div style="background:var(--blue);border:2px solid var(--line);border-radius:var(--wob2);padding:12px;margin-top:14px;box-shadow:2px 2px 0 var(--shadow)">
             <b>💱 Pay via GCash${d.order.status==="delivering"?" — have it ready, your order is on its way!":""}</b>
             ${store2.qr ? `<img src="${store2.qr}" alt="GCash QR" style="width:100%;max-width:210px;background:#fff;padding:8px;border:2px solid var(--line);border-radius:12px;display:block;margin:10px auto 4px;cursor:zoom-in" onclick="showPic('${store2.qr}','Scan to pay — ${store2.name}',0)">` : ""}

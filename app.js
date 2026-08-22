@@ -1218,6 +1218,8 @@ function renderOrders(){
           : `<button class="btn-danger sm" data-ord="reject" data-oid="${o.id}">✖ Reject</button>`}`:""}
       ${o.status==="preparing"?`<button class="btn-primary sm" data-ord="deliver" data-oid="${o.id}">🛵 Out for Delivery</button>`:""}
       ${o.status==="delivering"?`<button class="btn-primary sm" data-ord="complete" data-oid="${o.id}">✅ Delivered &amp; Paid</button>`:""}
+      ${(o.status==="preparing"||o.status==="delivering")&&o.payment==="GCash"
+        ? `<button class="btn-ghost sm" data-ord="${o.qrOpen?"qroff":"qron"}" data-oid="${o.id}">${o.qrOpen?"🙈 Hide Pay QR":"💱 Show Pay QR"}</button>`:""}
       ${(o.status==="done"||o.status==="rejected")?`<button class="btn-danger sm" data-delord="${o.id}">🗑</button>`:""}
     </div>`).join("")
     : `<p class="muted">No online orders yet.</p>`;

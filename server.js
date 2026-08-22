@@ -250,7 +250,7 @@ async function handleApi(req, res, url) {
       store: { name: st.name || "Store", phone: st.phone || "", logo: st.logo || "",
                qr: st.qr || "", gcash: st.gcash || "", gcashName: st.gcashName || "" },
       order: { id: o.id, ts: o.ts, items: o.items, itemsTotal: o.itemsTotal, fee: o.fee,
-               total: o.total, payment: o.payment, status: o.status, refundRef: o.refundRef || "", customerName: o.customer.name } });
+               total: o.total, payment: o.payment, status: o.status, refundRef: o.refundRef || "", qrOpen: !!o.qrOpen, customerName: o.customer.name } });
   }
 
   // public: storefront data
@@ -319,6 +319,11 @@ async function handleApi(req, res, url) {
       const arr2 = arr.filter(x => x.id !== b.orderId);
       writeOrders(c.id, arr2);
       return send(res, 200, { ok: true, deleted: true });
+    }
+    if (b.action === "qr_on" || b.action === "qr_off") {
+      o.qrOpen = (b.action === "qr_on");
+      writeOrders(c.id, arr);
+      return send(res, 200, { ok: true, order: o });
     }
     if (b.action === "reject" && o.payment === "GCash")
       return send(res, 400, { ok: false, error: "Customer already PAID via GCash. Use 'Cancel & Refund' and enter the refund reference." });

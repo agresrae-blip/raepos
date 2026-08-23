@@ -643,10 +643,17 @@ function renderInventory(){
         <td>${p.cat}</td><td>${peso(p.price)}</td><td class="muted">${peso(p.cost)}</td>
         <td><span class="pill ${cls}">${p.stock} — ${lbl}</span></td>
         <td class="muted">${p.barcode||"—"}</td>
-        <td><button class="btn-ghost sm" data-edit="${p.id}">✏️ Edit</button>
+        <td><button class="btn-ghost sm" data-av="${p.id}" title="Toggle availability in online store">${p.avail===0?"🚫 Not Available":"🟢 Available"}</button>
+            <button class="btn-ghost sm" data-edit="${p.id}">✏️ Edit</button>
             <button class="btn-ghost sm" data-del="${p.id}">🗑</button></td>
       </tr>`;}).join("");
   $$("#invBody [data-edit]").forEach(b=>b.onclick=()=>openProductModal(+b.dataset.edit));
+  $$("#invBody [data-av]").forEach(b=>b.onclick=()=>{
+    const p = products.find(x=>x.id===+b.dataset.av);
+    p.avail = p.avail===0 ? 1 : 0;
+    saveProducts(); syncCatalog(); renderInventory();
+    toast(p.avail===0 ? `"${p.name}" marked NOT available in online store` : `"${p.name}" is available again`);
+  });
   $$("#invBody [data-del]").forEach(b=>b.onclick=async ()=>{
     const p = products.find(x=>x.id===+b.dataset.del);
     if(currentUser().role !== "owner" && !await ownerGate(`Deleting "${p.name}" requires the OWNER PIN`)) return;
@@ -1150,7 +1157,7 @@ function syncCatalog(){
   licApi("catalog", {
     code: lic.code,
     online: !!settings.onlineStore,
-    products: products.filter(p=>p.stock>0).map(p=>({name:p.name, price:p.price, emoji:p.emoji||"📦", stock:p.stock, img:p.img||""})),
+    products: products.filter(p=>p.stock>0).map(p=>({name:p.name, price:p.price, emoji:p.emoji||"📦", stock:p.stock, avail: p.avail===0?0:1, img:p.img||""})),
     store: { name:settings.name, logo:settings.logo||"", address:settings.address, phone:settings.phone, theme:settings.theme||"sketchy", font:settings.font||"doodle", messenger:settings.messenger||"", tagline:settings.tagline||"", announce:settings.announce||"",
              gcash:a.gcashNum||"", gcashName:a.gcashName||"", qr:settings.qr||"", deliveryFee:settings.deliveryFee||0 }
   }).catch(()=>{});

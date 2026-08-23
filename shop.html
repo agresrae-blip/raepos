@@ -209,16 +209,23 @@ fetch("/api/shop/" + encodeURIComponent(code)).then(r=>r.json()).then(d=>{
 function renderGrid(){
   $("#grid").innerHTML = items.map(p=>{
     const nm = p.name.replace(/'/g,"\\'");
+    const off = p.avail === 0;
     const visual = p.img
-      ? `<div class="imgwrap" onclick="event.stopPropagation();showPic('${p.img}','${nm}',${p.price})"><img src="${p.img}" alt="${nm}"></div>`
+      ? `<div class="imgwrap" onclick="event.stopPropagation();showPic('${p.img}','${nm}',${p.price})"><img src="${p.img}" alt="${nm}"${off?' class="grayed"':''}></div>`
       : `<div class="imgwrap" onclick="event.stopPropagation();"><span class="em">${p.emoji}</span></div>`;
-    return `<div class="item" onclick="add('${nm}')">
-      ${visual}<h4>${p.name}</h4>
-      <div class="p">${peso(p.price)}</div><div class="s">${p.stock} available</div>
-    </div>`;}).join("");
+    return off
+      ? `<div class="item unavail">${visual}<h4>${p.name}</h4>
+          <div class="p">${peso(p.price)}</div><div class="s">🚫 Not Available</div>
+        </div>`
+      : `<div class="item" onclick="add('${nm}')">
+          ${visual}<h4>${p.name}</h4>
+          <div class="p">${peso(p.price)}</div><div class="s">${p.stock} available</div>
+        </div>`;
+  }).join("");
 }
 function add(name){
   const p = items.find(x=>x.name===name);
+  if(p.avail === 0) return;
   if((cart[name]||0) >= p.stock) return;
   cart[name] = (cart[name]||0) + 1; cartUI();
 }

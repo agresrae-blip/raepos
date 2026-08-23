@@ -231,6 +231,7 @@ async function handleApi(req, res, url) {
       products: (Array.isArray(b.products) ? b.products : []).slice(0, 500).map(p => ({
         name: String(p.name||"").slice(0,80), price: Math.max(0, +p.price || 0),
         emoji: String(p.emoji||"📦").slice(0,8), stock: Math.max(0, parseInt(p.stock,10) || 0),
+        avail: p.avail === 0 ? 0 : 1,
         img: String(p.img||"").slice(0, 300000)
       }))
     };

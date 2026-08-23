@@ -383,3 +383,8 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 .panel h3{font-size:22px}
 .stat-card small{letter-spacing:.4px}
 .stat-card strong{overflow-wrap:anywhere}
+
+/* unavailable products in online store */
+.item.unavail{opacity:.62;filter:saturate(.35);cursor:not-allowed}
+.item.unavail .s{color:#b3261e;font-weight:700}
+.imgwrap img.grayed{filter:grayscale(.8)}

@@ -346,9 +346,7 @@ async function handleApi(req, res, url) {
     if (!o) return send(res, 404, { ok: false, error: "Order not found." });
     const map = { accept:"preparing", reject:"rejected", deliver:"delivering", complete:"done" };
     if (b.action === "delete_order") {
-      // only delivered or rejected orders may be deleted
-      if (o.status !== "done" && o.status !== "rejected")
-        return send(res, 400, { ok: false, error: "Only delivered or rejected orders can be deleted." });
+      // owner can delete any order from the list
       const arr2 = arr.filter(x => x.id !== b.orderId);
       writeOrders(c.id, arr2);
       return send(res, 200, { ok: true, deleted: true });

@@ -1342,10 +1342,22 @@ function renderAllOrders(){
             ? `<button class="btn-danger sm" data-ord="rejectrefund" data-oid="${o.id}">💰 Cancel &amp; Refund</button>`
             : `<button class="btn-danger sm" data-ord="reject" data-oid="${o.id}">✖ Reject</button>`}`:""}
         ${o.status==="preparing"?`<button class="btn-primary sm" data-ord="deliver" data-oid="${o.id}">🛵 Out for Delivery</button>`:""}
-        ${o.status==="delivering"?`<button class="btn-primary sm" data-ord="complete" data-oid="${o.id}">✅ Delivered &amp; Paid</button>`:""}`}`;
+        ${o.status==="delivering"?`<button class="btn-primary sm" data-ord="complete" data-oid="${o.id}">✅ Delivered &amp; Paid</button>`:""}
+        <button class="btn-danger sm" data-delord="${o.id}">🗑 Delete</button>`}`;
   }).join("") : `<p class="muted">No orders yet — online orders appear here automatically, or click "New Order (Manual)".</p>`;
   $$("#allOrdersList [data-ord]").forEach(b=>b.onclick=()=>orderAction(b.dataset.oid, b.dataset.ord));
   $$("#allOrdersList [data-mord]").forEach(b=>b.onclick=()=>manualOrderAction(b.dataset.oid, b.dataset.mord));
+  $$("#allOrdersList [data-delord]").forEach(b=>b.onclick=async ()=>{
+    if(currentUser().role !== "owner" && !await ownerGate("Deleting an order requires the OWNER PIN")) return;
+    if(!confirm("Delete this order from the list? Any recorded sale is NOT affected.")) return;
+    try{
+      const r = await licApi("orderupdate", { code: DB.get("license").code, orderId: b.dataset.delord, action: "delete_order" });
+      if(!r.ok) return toast(r.error || "Delete failed", true);
+      DB.set("onlineOrdersMirror", DB.get("onlineOrdersMirror", []).filter(o=>o.id !== b.dataset.delord)); // never restore a deleted order
+      toast("Order deleted from the list");
+      pollOrders(true);
+    }catch(e){ toast("Connection problem", true); }
+  });
   $$("#allOrdersList [data-track]").forEach(b=>b.onclick=()=>{
     const url = shopLink() + "/order/" + b.dataset.track;
     if(!url.includes("/shop/")) return toast("No server link yet", true);

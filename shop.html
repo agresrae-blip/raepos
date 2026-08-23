@@ -138,8 +138,24 @@ const code = pathParts[2] || "";
 const TRACK_MODE = pathParts[3] === "order" && pathParts[4];
 let store = null, items = [], cart = {}, pay = "COD";
 
+/* remember this device's order IDs so customers can re-open any tracking link */
+function myOrders(){ try{ return JSON.parse(localStorage.getItem("raepos_myorders")||"[]"); }catch(e){ return []; } }
+function rememberOrder(oid){
+  try{
+    const a = myOrders().filter(x=>x!==oid);
+    a.unshift(oid);
+    localStorage.setItem("raepos_myorders", JSON.stringify(a.slice(0,10)));
+  }catch(e){}
+}
+function goTrack(){
+  const v = ($("#trackId") && $("#trackId").value.trim() || "").toUpperCase();
+  if(v.length < 6){ alert("Enter your Order ID (from your order confirmation)."); return; }
+  location.href = location.origin + "/shop/" + encodeURIComponent(code) + "/order/" + encodeURIComponent(v);
+}
+
 function trackPage(){
   const oid = pathParts[4].toUpperCase();
+  rememberOrder(oid);
   let store2 = {};
   const render = ()=>{
     fetch("/api/shop/" + encodeURIComponent(code) + "/order/" + oid).then(r=>r.json()).then(d=>{
@@ -205,7 +221,16 @@ fetch("/api/shop/" + encodeURIComponent(code)).then(r=>r.json()).then(d=>{
       </div>
     </div>
     ${store.announce?`<div class="announce">📢 ${store.announce}</div>`:""}
+    <div class="sheet" style="position:static;max-width:100%;margin:14px 0;padding:12px 14px">
+      <b>🔍 Track your order</b>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <input id="trackId" placeholder="Enter Order ID e.g. OMT5..." style="flex:1;min-width:150px;text-transform:uppercase">
+        <button class="btn" style="padding:8px 14px" onclick="goTrack()">Track ▸</button>
+      </div>
+      <div id="myOrdersBox" style="margin-top:8px"></div>
+    </div>
     <div class="sect">🛍️ Our Products</div>`;
+  renderMyOrders();
   renderGrid();
   const foot = document.createElement("div");
   foot.className = "shopfoot";
@@ -213,8 +238,15 @@ fetch("/api/shop/" + encodeURIComponent(code)).then(r=>r.json()).then(d=>{
   $("#content").appendChild(foot);
 }).catch(()=>{ $("#offBox").classList.remove("hidden"); });
 
-function renderGrid(){
-  $("#grid").innerHTML = items.map(p=>{
+function renderMyOrders(){
+  const box = $("#myOrdersBox");
+  if(!box) return;
+  const a = myOrders();
+  if(!a.length){ box.innerHTML = `<span style="color:#8b93b5;font-size:.78rem">Tip: save your order confirmation link — or enter the Order ID above anytime.</span>`; return; }
+  box.innerHTML = `<div style="font-size:.78rem;color:#8b93b5;margin-bottom:4px">Your recent orders on this device:</div>` +
+    a.map(id=>`<button class="btn" style="padding:6px 10px;margin:2px 4px 2px 0;font-size:.8rem" onclick="location.href=location.origin+'/shop/${encodeURIComponent(code)}/order/${id}'">📦 ${id}</button>`).join("");
+}
+function renderGrid(){  $("#grid").innerHTML = items.map(p=>{
     const nm = p.name.replace(/'/g,"\\'");
     const off = p.avail === 0;
     const visual = p.img
@@ -291,6 +323,7 @@ async function placeOrder(){
       method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
     }).then(x=>x.json());
     if(!r.ok){ $("#formErr").textContent = r.error || "Could not place order."; btn.disabled = false; btn.textContent = "Place Order ▸"; return; }
+    rememberOrder(r.orderId);
     cart = {}; cartUI();
     closeCart();
     $("#content").classList.add("hidden");

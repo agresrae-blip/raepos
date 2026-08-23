@@ -1404,15 +1404,18 @@ function moRender(){
   $("#moItemList").innerHTML = moItems.length
     ? moItems.map((i,ix)=>`${i.qty}× ${i.name} — ${peso(i.qty*i.price)} <button class="btn-ghost sm" data-morem="${ix}" type="button">✖</button>`).join("<br>")
     : "No items yet.";
-  const t = moItems.reduce((a,i)=>a+i.qty*i.price,0);
-  $("#moTotal").innerHTML = `<b>${peso(t)}</b>`;
+  const it = moItems.reduce((a,i)=>a+i.qty*i.price,0);
+  const fee = Math.max(0, +$("#moFee").value || 0);
+  $("#moItemsTotal").textContent = peso(it);
+  $("#moTotal").innerHTML = `<b>${peso(it + fee)}</b>`;
   $$("#moItemList [data-morem]").forEach(b=>b.onclick=()=>{ moItems.splice(+b.dataset.morem,1); moRender(); });
 }
+$("#moFee").oninput = ()=>moRender();
 $("#addOrderBtn").onclick = ()=>{
   if(currentUser().role !== "owner" && !ownerGate("Adding a manual order requires the OWNER PIN")) return;
   moItems = [];
   ["moName","moPhone","moAddr","moNotes","moWhen"].forEach(id=>$("#"+id).value="");
-  $("#moQty").value = 1; $("#moPay").value = "COD"; $("#moPaid").checked = false;
+  $("#moQty").value = 1; $("#moPay").value = "COD"; $("#moPaid").checked = false; $("#moFee").value = 0;
   moFillProducts(); moRender();
   openModal("#manualOrderModal");
 };
@@ -1431,12 +1434,13 @@ $("#moSave").onclick = ()=>{
   const whenRaw = $("#moWhen").value;
   const whenTxt = whenRaw ? new Date(whenRaw).toLocaleString("en-PH", { dateStyle:"medium", timeStyle:"short" }) : "";
   const itemsTotal = moItems.reduce((a,i)=>a+i.qty*i.price,0);
+  const fee = Math.max(0, Math.round((+$("#moFee").value || 0) * 100) / 100);
   const o = {
     id: "M" + Date.now().toString(36).toUpperCase() + Math.floor(Math.random()*1e3),
     ts: Date.now(),
     customer: { name, phone:$("#moPhone").value.trim(), address:$("#moAddr").value.trim(), notes:$("#moNotes").value.trim() },
     items: moItems.map(i=>({name:i.name, qty:i.qty, price:i.price})),
-    itemsTotal, fee:0, total:itemsTotal,
+    itemsTotal, fee, total: Math.round((itemsTotal + fee) * 100) / 100,
     payment: $("#moPay").value, ref:"",
     requestedTime: whenTxt, deliveryTime:"", note:"",
     paid: $("#moPaid").checked, manual:true, status:"manual"

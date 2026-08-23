@@ -216,15 +216,17 @@ async function handleApi(req, res, url) {
     const c = db.codes.find(x => x.code === String(b.code || "").trim().toUpperCase());
     if (!c) return send(res, 404, { ok: false, error: "License not found." });
     if (c.revoked) return send(res, 403, { ok: false, error: "Revoked." });
+    const prev = c.catalog && c.catalog.store || {};
     c.catalog = {
       online: !!b.online, updatedAt: Date.now(),
-      store: { name: String((b.store||{}).name||"Store"), logo: (b.store||{}).logo || "",
+      store: { name: String((b.store||{}).name||"Store"),
+               // keep uploaded images/pay details if a device without them syncs (prevents accidental QR wipe)
+               logo: (b.store||{}).logo || prev.logo || "",
                address: String((b.store||{}).address||""), phone: String((b.store||{}).phone||""),
-               gcash: String((b.store||{}).gcash||""), gcashName: String((b.store||{}).gcashName||""),
-               qr: (b.store||{}).qr || "",
-               theme: String((b.store||{}).theme||"sketchy").slice(0,20),
-               font: String((b.store||{}).font||"doodle").slice(0,20),
-               messenger: String((b.store||{}).messenger||"").slice(0,200),
+               gcash: String((b.store||{}).gcash||"") || prev.gcash || "",
+               gcashName: String((b.store||{}).gcashName||"") || prev.gcashName || "",
+               qr: (b.store||{}).qr || prev.qr || "",
+               messenger: String((b.store||{}).messenger||"").slice(0,200) || prev.messenger || "",
                tagline: String((b.store||{}).tagline||"").slice(0,120),
                announce: String((b.store||{}).announce||"").slice(0,160),
                deliveryFee: Math.max(0, +((b.store||{}).deliveryFee) || 0) },
@@ -301,7 +303,29 @@ async function handleApi(req, res, url) {
     const b = await readBody(req);
     const c = db.codes.find(x => x.code === String(b.code || "").trim().toUpperCase());
     if (!c) return send(res, 404, { ok: false, error: "License not found." });
-    return send(res, 200, { ok: true, orders: readOrders(c.id).slice(0, 100) });
+    let arr = readOrders(c.id);
+    // self-heal: POS can push back orders lost in a server restart/redeploy
+    if (Array.isArray(b.restore) && b.restore.length) {
+      let added = 0;
+      b.restore.forEach(o => {
+        if (o && o.id && !arr.find(x => x.id === o.id)) {
+          arr.push({
+            id: String(o.id).slice(0, 20), ts: +o.ts || Date.now(),
+            status: String(o.status || "new").slice(0, 12), payment: String(o.payment || "COD").slice(0, 10),
+            total: Math.max(0, +o.total || 0), fee: Math.max(0, +o.fee || 0),
+            itemsTotal: o.itemsTotal != null ? +o.itemsTotal : undefined,
+            items: (Array.isArray(o.items) ? o.items : []).slice(0, 50).map(i => ({ name: String(i.name||"").slice(0,80), qty: Math.max(1, parseInt(i.qty,10) || 1), price: Math.max(0, +i.price || 0) })),
+            ref: String(o.ref || "").slice(0, 40), refundRef: String(o.refundRef || "").slice(0, 40),
+            qrOpen: !!o.qrOpen,
+            customer: { name: String((o.customer||{}).name||"").slice(0,60), phone: String((o.customer||{}).phone||"").slice(0,20), address: String((o.customer||{}).address||"").slice(0,200), notes: String((o.customer||{}).notes||"").slice(0,200) }
+          });
+          added++;
+        }
+      });
+      if (added) writeOrders(c.id, arr);
+    }
+    const missing = Array.isArray(b.ids) ? b.ids.filter(id => !arr.find(x => x.id === id)) : [];
+    return send(res, 200, { ok: true, orders: arr.slice(-100), missing });
   }
 
   // POS: update an order (accept / reject / deliver / complete)

@@ -1195,9 +1195,26 @@ async function pollOrders(silent=true){
   const lic = DB.get("license", null);
   if(!lic || !licServer()) return;
   try{
-    const r = await licApi("orders", { code: lic.code });
+    const mirror = DB.get("onlineOrdersMirror", []);
+    const r = await licApi("orders", { code: lic.code, ids: mirror.map(o=>o.id) });
     if(!r.ok) return;
     onlineOrders = r.orders || [];
+    // self-heal: server lost orders (free-tier restart/redeploy) — push our local copies back
+    if(r.missing && r.missing.length){
+      const push = mirror.filter(o=>r.missing.includes(o.id));
+      if(push.length){
+        try{
+          const r2 = await licApi("orders", { code: lic.code, restore: push });
+          if(r2.ok && r2.orders){ onlineOrders = r2.orders; toast(`Recovered ${push.length} online order(s) after server restart`); }
+        }catch(e2){}
+      }
+    }
+    // keep a local mirror (server version wins) so orders survive server wipes
+    const merged = {};
+    mirror.concat(onlineOrders).forEach(o=>{ merged[o.id] = o; });
+    onlineOrders.forEach(o=>{ merged[o.id] = o; });
+    const cutoff = Date.now() - 30*24*3600*1000;
+    DB.set("onlineOrdersMirror", Object.values(merged).filter(o=>+o.ts >= cutoff).sort((a,b)=>a.ts-b.ts).slice(-100));
     // notify about unseen new orders
     const seen = DB.get("seenOrderIds", []);
     onlineOrders.filter(o=>o.status==="new" && !seen.includes(o.id)).forEach(o=>{
@@ -1243,6 +1260,7 @@ function renderOrders(){
     try{
       const r = await licApi("orderupdate", { code: DB.get("license").code, orderId: b.dataset.delord, action: "delete_order" });
       if(!r.ok) return toast(r.error || "Delete failed", true);
+      DB.set("onlineOrdersMirror", DB.get("onlineOrdersMirror", []).filter(o=>o.id !== b.dataset.delord)); // never restore a deleted order
       toast("Order deleted from the list");
       pollOrders(true);
     }catch(e){ toast("Connection problem", true); }

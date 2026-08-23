@@ -299,14 +299,19 @@
     <!-- REPORTS -->
     <section id="page-reports" class="page">
       <header class="page-head"><h2>Reports</h2></header>
+      <div id="repTabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn-primary sm" data-scope="all">📊 All Sales</button>
+        <button class="btn-ghost sm" data-scope="store">🏪 Store (walk-in)</button>
+        <button class="btn-ghost sm" data-scope="online">🌐 Online &amp; Delivery</button>
+      </div>
       <div class="stat-grid">
-        <div class="stat-card c1"><small>Total Sales (all time)</small><strong id="repTotal">₱0.00</strong><span id="repCount">0 transactions</span></div>
+        <div class="stat-card c1"><small>Total Sales (<span id="repScopeLabel">all</span>)</small><strong id="repTotal">₱0.00</strong><span id="repCount">0 transactions</span></div>
         <div class="stat-card c3"><small>Estimated Profit</small><strong id="repProfit">₱0.00</strong><span>price − cost</span></div>
-        <div class="stat-card c2"><small>Inventory Value</small><strong id="repInvValue">₱0.00</strong><span>cost × stock</span></div>
+        <div class="stat-card c2"><small>Inventory Value</small><strong id="repInvValue">₱0.00</strong><span id="repInvNote">cost × stock</span></div>
         <div class="stat-card c4"><small>Products</small><strong id="repProdCount">0</strong><span>in catalog</span></div>
       </div>
       <div class="dash-cols">
-        <div class="panel"><h3>💳 Payments by Method (all time)</h3><div id="repPayMix" class="pay-mix"></div></div>
+        <div class="panel"><h3>💳 Payments by Method (<span id="repScopeLabel2">all time</span>)</h3><div id="repPayMix" class="pay-mix"></div></div>
         <div class="panel"><h3>📅 Last 7 Days Sales</h3><div id="repDaily" class="pay-mix"></div></div>
       </div>
       <div class="panel">

@@ -930,15 +930,29 @@ $("#salesFilterBtn").onclick = ()=>renderSales();
 $("#salesTodayBtn").onclick = ()=>{ $("#salesFrom").value = todayStr(); $("#salesTo").value = todayStr(); renderSales(); };
 
 /* ---------- REPORTS ---------- */
+let repScope = "all"; // all | store | online
 function renderReports(){
-  const ls = liveSales();
+  const all = liveSales();
+  const ls = repScope==="store" ? all.filter(s=>!s.online && !s.manual)
+           : repScope==="online" ? all.filter(s=>s.online || s.manual)
+           : all;
+  const scopeName = repScope==="store" ? "store walk-in" : repScope==="online" ? "online & delivery" : "all";
+  $("#repScopeLabel").textContent = scopeName;
+  $("#repScopeLabel2").textContent = scopeName + " · all time";
   const total = ls.reduce((a,s)=>a+s.total,0);
   const profit = ls.reduce((a,s)=>a+s.items.reduce((x,i)=>x+(i.price-(i.cost||0))*i.qty,0),0);
-  const invVal = products.reduce((a,p)=>a+(p.cost||0)*p.stock,0);
+  // stock is not tracked in Online-Only mode — inventory value is a store-mode figure
+  if(onlineOnly()){
+    $("#repInvValue").textContent = "—";
+    $("#repInvNote").textContent = "not tracked in Online-Only mode";
+  }else{
+    const invVal = products.reduce((a,p)=>a+(p.cost||0)*p.stock,0);
+    $("#repInvValue").textContent = peso(invVal);
+    $("#repInvNote").textContent = "cost × stock";
+  }
   $("#repTotal").textContent = peso(total);
   $("#repCount").textContent = ls.length + " transactions";
   $("#repProfit").textContent = peso(profit);
-  $("#repInvValue").textContent = peso(invVal);
   $("#repProdCount").textContent = products.length;
 
   const mix = {}; ls.forEach(s=>mix[s.payment]=(mix[s.payment]||0)+s.total);
@@ -952,7 +966,7 @@ function renderReports(){
   const days = [];
   for(let i=6;i>=0;i--){ const d = new Date(); d.setDate(d.getDate()-i);
     const ds = d.toISOString().slice(0,10);
-    days.push([ds, liveSales().filter(s=>s.date.startsWith(ds)).reduce((a,s)=>a+s.total,0)]);
+    days.push([ds, ls.filter(s=>s.date.startsWith(ds)).reduce((a,s)=>a+s.total,0)]);
   }
   const dm = Math.max(...days.map(d=>d[1]),1);
   $("#repDaily").innerHTML = days.map(([d,v])=>`<div class="mix-row">
@@ -960,6 +974,11 @@ function renderReports(){
     <div class="mix-bar"><div class="mix-fill" style="width:${v/dm*100}%"></div></div>
     <b style="text-align:right">${peso(v)}</b></div>`).join("");
 }
+$$("#repTabs [data-scope]").forEach(b=>b.onclick=()=>{
+  repScope = b.dataset.scope;
+  $$("#repTabs [data-scope]").forEach(x=>{ x.className = x===b ? "btn-primary sm" : "btn-ghost sm"; });
+  renderReports();
+});
 $("#exportCsvBtn").onclick = ()=>{
   let csv = "Receipt,Date,Cashier,Payment,Customer,Reference,Discount %,Subtotal,Discount,VAT,Total,Refunded\n";
   sales.forEach(s=>{ csv += [s.receipt,s.date,s.cashier,s.payment,s.customer||"",s.ref,s.discountPct,s.subtotal,s.discount,s.vat,s.total,s.refunded?"YES":""]

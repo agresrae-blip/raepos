@@ -287,6 +287,7 @@ $$("#nav .nav-btn").forEach(b => b.onclick = async ()=>{
     if(b.dataset.page==="orders"){ pollOrders(true); renderAllOrders(); }
     if(b.dataset.page==="completed"){ pollOrders(true); renderCompletedOrders(); }
   if(b.dataset.page==="reports") renderReports();
+  if(b.dataset.page==="calc") calcAll();
 });
 
 function refreshFoot(){
@@ -988,6 +989,46 @@ $("#exportCsvBtn").onclick = ()=>{
 $("#exportJsonBtn").onclick = ()=>{
   download("novapos-backup.json", JSON.stringify({products,sales,settings},null,2), "application/json");
 };
+
+/* ---------- price & profit calculator ---------- */
+const num = id => { const v = parseFloat($("#"+id).value); return isFinite(v) && v >= 0 ? v : 0; };
+function calcAll(){
+  const cost = num("calcCost"), qty = Math.floor(num("calcQty")) || 0;
+  const margin = num("calcMargin"), target = num("calcTarget");
+  const out = $("#calcOut"), chk = $("#calcCheck");
+  if(!cost || !qty){ out.innerHTML = `<p class="muted">Fill in your cost and pieces to see the price.</p>`; chk.innerHTML = `<p class="muted">Enter a price to check your profit.</p>`; return; }
+  const costPerPc = cost / qty;
+  // target kita (₱) wins if filled; otherwise margin % of cost; default margin 30%
+  const useTarget = target > 0;
+  const profitTotal = useTarget ? target : cost * (margin > 0 ? margin : 30) / 100;
+  const price = (cost + profitTotal) / qty;
+  const round2 = n => Math.round(n * 100) / 100;
+  const sugPrice = Math.ceil(price); // clean whole-peso price that covers the profit
+  out.innerHTML = `
+    <div class="totrow"><span>Cost per piece</span><b>${peso(costPerPc)}</b></div>
+    <div class="totrow"><span>Sell at (exact)</span><b>${peso(round2(price))}</b> / pc</div>
+    <div class="totrow" style="color:var(--ok)"><span>Suggested price (rounded up)</span><b style="color:var(--ok)">${peso(sugPrice)}</b> / pc</div>
+    <hr class="sep">
+    <div class="totrow"><span>If you sell all ${qty} at ${peso(sugPrice)}:</span></div>
+    <div class="totrow"><span>Total sales (revenue)</span><b>${peso(sugPrice * qty)}</b></div>
+    <div class="totrow"><span>Total gastos (cost)</span><b>${peso(cost)}</b></div>
+    <div class="totrow"><span><b>💰 Total kita / income</b></span><b style="color:var(--ok)">${peso(sugPrice * qty - cost)}</b></div>
+    <p class="muted sm-note" style="margin-top:6px">${useTarget ? "Based on your target kita of " + peso(target) + "." : "Based on a " + (margin > 0 ? margin : 30) + "% profit margin."} Rounding the price up to ${peso(sugPrice)} gives you a little extra.</p>`;
+  // price check
+  const price2 = num("calcPrice");
+  if(price2 > 0){
+    const rev = price2 * qty, profit2 = rev - cost, margin2 = cost ? profit2 / cost * 100 : 0;
+    chk.innerHTML = `
+      <div class="totrow"><span>Revenue (${qty} × ${peso(price2)})</span><b>${peso(rev)}</b></div>
+      <div class="totrow"><span>Kita per piece</span><b>${peso(round2(price2 - costPerPc))}</b></div>
+      <div class="totrow"><span><b>💰 Total kita</b></span><b style="color:${profit2 >= 0 ? "var(--ok)" : "var(--bad)"}">${peso(round2(profit2))}</b></div>
+      <div class="totrow"><span>Profit margin</span><b>${round2(margin2)}%</b></div>
+      ${profit2 < 0 ? `<p style="color:var(--bad);font-size:.85rem;margin-top:6px">⚠ Lugi! This price is below your cost of ${peso(costPerPc)} per piece.</p>` : ""}`;
+  } else chk.innerHTML = `<p class="muted">Enter a price to check your profit.</p>`;
+}
+["calcCost","calcQty","calcMargin","calcTarget","calcPrice"].forEach(id=>{
+  const el = $("#"+id); if(el) el.addEventListener("input", calcAll);
+});
 function download(name, content, type){
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([content],{type}));

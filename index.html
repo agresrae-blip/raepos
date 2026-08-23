@@ -91,6 +91,7 @@
       <button class="nav-btn" data-page="orders">📋 <span>All Orders</span><em id="ordersBadge" class="badge hidden"></em></button>
       <button class="nav-btn" data-page="completed">✅ <span>Completed Orders</span></button>
       <button class="nav-btn" data-page="reports">📈 <span>Reports</span></button>
+      <button class="nav-btn" data-page="calc">🧮 <span>Calculator</span></button>
       <button class="nav-btn" data-page="settings">⚙️ <span>Settings</span></button>
     </nav>
     <div class="sidebar-foot">
@@ -319,6 +320,47 @@
         <p class="muted">Download your data for accounting or backup.</p>
         <button id="exportCsvBtn" class="btn-primary sm">⬇ Export Sales CSV</button>
         <button id="exportJsonBtn" class="btn-ghost sm">⬇ Full Backup (JSON)</button>
+      </div>
+    </section>
+
+    <!-- CALCULATOR -->
+    <section id="page-calc" class="page">
+      <header class="page-head"><h2>🧮 Price &amp; Profit Calculator</h2></header>
+      <p class="muted" style="margin-bottom:10px">Enter your total cost (gastos) and how many pieces you make — see the exact price to sell and your income.</p>
+      <div class="dash-cols">
+        <div class="panel">
+          <h3>📝 Your Cost</h3>
+          <label>💰 Total gastos / cost (₱) <small>— halong tanan (ingredients, palaman, gas, etc.)</small></label>
+          <input id="calcCost" type="number" min="0" step="0.01" placeholder="e.g. 1500">
+          <label style="margin-top:10px">📦 Pila ka pieces / orders ang makuha?</label>
+          <input id="calcQty" type="number" min="1" step="1" placeholder="e.g. 50">
+          <label style="margin-top:10px">🎯 Ganansya — pick one:</label>
+          <div class="two">
+            <div>
+              <label><small>Profit margin % of cost</small></label>
+              <input id="calcMargin" type="number" min="0" step="1" placeholder="e.g. 30">
+            </div>
+            <div>
+              <label><small>…or target kita (₱ total)</small></label>
+              <input id="calcTarget" type="number" min="0" step="0.01" placeholder="e.g. 500">
+            </div>
+          </div>
+          <p class="muted sm-note" style="margin-top:6px">If both are filled, the target kita (₱) is used.</p>
+        </div>
+        <div class="panel">
+          <h3>✅ Result</h3>
+          <div id="calcOut"><p class="muted">Fill in your cost and pieces to see the price.</p></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>🔍 Check a price you already have in mind</h3>
+        <div class="dash-cols">
+          <div>
+            <label>Selling price per piece (₱)</label>
+            <input id="calcPrice" type="number" min="0" step="0.01" placeholder="e.g. 45">
+          </div>
+          <div id="calcCheck"><p class="muted">Enter a price to check your profit.</p></div>
+        </div>
       </div>
     </section>
 

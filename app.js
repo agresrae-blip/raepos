@@ -285,6 +285,7 @@ $$("#nav .nav-btn").forEach(b => b.onclick = async ()=>{
   if(b.dataset.page==="sales") renderSales();
     if(b.dataset.page==="online"){ renderOnline(); pollOrders(true); }
     if(b.dataset.page==="orders"){ pollOrders(true); renderAllOrders(); }
+    if(b.dataset.page==="completed"){ renderCompletedOrders(); }
   if(b.dataset.page==="reports") renderReports();
 });
 
@@ -1242,6 +1243,7 @@ async function pollOrders(silent=true){
     if(onlineOrders.length) DB.set("seenOrderIds", seen.slice(-200));
     renderOrders();
     renderAllOrders();
+    renderCompletedOrders();
   }catch(e){}
 }
 function renderOrders(){
@@ -1300,19 +1302,14 @@ function renderOrders(){
   });
 }
 
-/* ---------- ALL ORDERS page (online + manual) ---------- */
+/* ---------- ALL ORDERS page (online + manual) + COMPLETED ORDERS page ---------- */
 function manualOrdersAll(){ return DB.get("manualOrders", []); }
 function saveManualOrders(arr){ DB.set("manualOrders", arr); }
-function renderAllOrders(){
-  const list = $("#allOrdersList");
-  if(!list) return;
-  const manual = manualOrdersAll();
-  const all = onlineOrders.concat(manual).sort((a,b)=>b.ts-a.ts);
+function orderCardHTML(o){
+  const m = !!o.manual;
   const label = { new:"🆕 NEW", preparing:"👨‍🍳 Preparing", delivering:"🛵 Out for delivery", done:"✅ Delivered", rejected:"❌ Rejected", manual:"📝 Manual" };
   const pillCls = { new:"ok", preparing:"warn", delivering:"warn", done:"ok", rejected:"bad", manual:"warn" };
-  list.innerHTML = all.length ? all.map(o=>{
-    const m = !!o.manual;
-    return `
+  return `
     <div class="order-card ${o.status==="new"?"new":""}">
       <div class="order-head">
         <span><b>${o.id}</b> · ${new Date(o.ts).toLocaleString("en-PH")} ${m?"· ✍️ typed in":""}</span>
@@ -1344,10 +1341,11 @@ function renderAllOrders(){
         ${o.status==="preparing"?`<button class="btn-primary sm" data-ord="deliver" data-oid="${o.id}">🛵 Out for Delivery</button>`:""}
         ${o.status==="delivering"?`<button class="btn-primary sm" data-ord="complete" data-oid="${o.id}">✅ Delivered &amp; Paid</button>`:""}
         <button class="btn-danger sm" data-delord="${o.id}">🗑 Delete</button>`}`;
-  }).join("") : `<p class="muted">No orders yet — online orders appear here automatically, or click "New Order (Manual)".</p>`;
-  $$("#allOrdersList [data-ord]").forEach(b=>b.onclick=()=>orderAction(b.dataset.oid, b.dataset.ord));
-  $$("#allOrdersList [data-mord]").forEach(b=>b.onclick=()=>manualOrderAction(b.dataset.oid, b.dataset.mord));
-  $$("#allOrdersList [data-delord]").forEach(b=>b.onclick=async ()=>{
+}
+function wireOrderCards(scopeSel){
+  $$(scopeSel+" [data-ord]").forEach(b=>b.onclick=()=>orderAction(b.dataset.oid, b.dataset.ord));
+  $$(scopeSel+" [data-mord]").forEach(b=>b.onclick=()=>manualOrderAction(b.dataset.oid, b.dataset.mord));
+  $$(scopeSel+" [data-delord]").forEach(b=>b.onclick=async ()=>{
     if(currentUser().role !== "owner" && !await ownerGate("Deleting an order requires the OWNER PIN")) return;
     if(!confirm("Delete this order from the list? Any recorded sale is NOT affected.")) return;
     try{
@@ -1358,11 +1356,25 @@ function renderAllOrders(){
       pollOrders(true);
     }catch(e){ toast("Connection problem", true); }
   });
-  $$("#allOrdersList [data-track]").forEach(b=>b.onclick=()=>{
+  $$(scopeSel+" [data-track]").forEach(b=>b.onclick=()=>{
     const url = shopLink() + "/order/" + b.dataset.track;
     if(!url.includes("/shop/")) return toast("No server link yet", true);
     navigator.clipboard.writeText(url).then(()=>toast("Track link copied 🔗"));
   });
+}
+function renderAllOrders(){
+  if(!$("#allOrdersList")) return;
+  const all = onlineOrders.concat(manualOrdersAll()).filter(o=>o.status!=="done").sort((a,b)=>b.ts-a.ts);
+  $("#allOrdersList").innerHTML = all.length ? all.map(orderCardHTML).join("")
+    : `<p class="muted">No active orders — new online and manual orders appear here. Delivered orders move to ✅ Completed Orders.</p>`;
+  wireOrderCards("#allOrdersList");
+}
+function renderCompletedOrders(){
+  if(!$("#completedOrdersList")) return;
+  const done = onlineOrders.concat(manualOrdersAll()).filter(o=>o.status==="done").sort((a,b)=>b.ts-a.ts);
+  $("#completedOrdersList").innerHTML = done.length ? done.map(orderCardHTML).join("")
+    : `<p class="muted">No completed orders yet — orders you mark Delivered move here automatically.</p>`;
+  wireOrderCards("#completedOrdersList");
 }
 async function manualOrderAction(oid, action){
   const arr = manualOrdersAll();
@@ -1398,11 +1410,11 @@ async function manualOrderAction(oid, action){
     if(currentUser().role !== "owner" && !await ownerGate("Deleting an order requires the OWNER PIN")) return;
     if(!confirm("Delete this manual order?"+(o.status!=="done"?" No sale will be recorded.":""))) return;
     saveManualOrders(arr.filter(x=>x.id!==oid));
-    renderAllOrders();
+    renderAllOrders(); renderCompletedOrders();
     return toast("Manual order deleted");
   }
   saveManualOrders(arr);
-  renderAllOrders();
+  renderAllOrders(); renderCompletedOrders();
 }
 
 /* manual order modal */

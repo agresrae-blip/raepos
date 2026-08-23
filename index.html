@@ -89,6 +89,7 @@
       <button class="nav-btn" data-page="sales">🧾 <span>Sales</span></button>
       <button class="nav-btn" data-page="online">🌐 <span>Online</span></button>
       <button class="nav-btn" data-page="orders">📋 <span>All Orders</span><em id="ordersBadge" class="badge hidden"></em></button>
+      <button class="nav-btn" data-page="completed">✅ <span>Completed Orders</span></button>
       <button class="nav-btn" data-page="reports">📈 <span>Reports</span></button>
       <button class="nav-btn" data-page="settings">⚙️ <span>Settings</span></button>
     </nav>
@@ -282,6 +283,16 @@
       <div class="panel">
         <h3>📦 Order List</h3>
         <div id="allOrdersList"><p class="muted">No orders yet.</p></div>
+      </div>
+    </section>
+
+    <!-- COMPLETED ORDERS -->
+    <section id="page-completed" class="page">
+      <header class="page-head"><h2>✅ Completed Orders</h2></header>
+      <p class="muted" style="margin-bottom:10px">Orders you marked Delivered move here automatically — your active list stays clean.</p>
+      <div class="panel">
+        <h3>📦 Delivered Orders</h3>
+        <div id="completedOrdersList"><p class="muted">No completed orders yet.</p></div>
       </div>
     </section>
 

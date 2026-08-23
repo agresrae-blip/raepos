@@ -88,6 +88,7 @@
       <button class="nav-btn" data-page="stockin">📥 <span>Stock In</span></button>
       <button class="nav-btn" data-page="sales">🧾 <span>Sales</span></button>
       <button class="nav-btn" data-page="online">🌐 <span>Online</span><em id="ordersBadge" class="badge hidden"></em></button>
+      <button class="nav-btn" data-page="orders">📋 <span>All Orders</span></button>
       <button class="nav-btn" data-page="reports">📈 <span>Reports</span></button>
       <button class="nav-btn" data-page="settings">⚙️ <span>Settings</span></button>
     </nav>
@@ -271,6 +272,19 @@
       </div>
     </section>
 
+    <!-- ALL ORDERS -->
+    <section id="page-orders" class="page">
+      <header class="page-head">
+        <h2>📋 All Orders</h2>
+        <button id="addOrderBtn" class="btn-primary">➕ New Order (Manual)</button>
+      </header>
+      <p class="muted" style="margin-bottom:10px">Every order in one place — online orders come in automatically, manual orders are typed in by you (phone / text / walk-in reservations).</p>
+      <div class="panel">
+        <h3>📦 Order List</h3>
+        <div id="allOrdersList"><p class="muted">No orders yet.</p></div>
+      </div>
+    </section>
+
     <!-- REPORTS -->
     <section id="page-reports" class="page">
       <header class="page-head"><h2>Reports</h2></header>
@@ -427,6 +441,38 @@
     <div class="modal-actions">
       <button class="btn-ghost" data-close>Cancel</button>
       <button id="pmSave" class="btn-primary">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANUAL ORDER MODAL -->
+<div id="manualOrderModal" class="modal hidden">
+  <div class="modal-card wide">
+    <h3>➕ New Manual Order</h3>
+    <p class="muted sm-note">For phone / text / walk-in reservations. Fill in what the customer ordered and their details.</p>
+    <div class="two">
+      <div><label>Customer Name *</label><input id="moName" placeholder="e.g. Juan Dela Cruz"></div>
+      <div><label>Mobile Number</label><input id="moPhone" placeholder="09xx xxx xxxx" inputmode="tel"></div>
+    </div>
+    <label>Delivery Address</label><input id="moAddr" placeholder="House #, Street, Barangay">
+    <label>Notes (what the customer said)</label><input id="moNotes" placeholder="e.g. reserve for birthday, text on arrival">
+    <hr class="sep">
+    <label>Items *</label>
+    <div class="link-row">
+      <select id="moProduct" style="flex:2"></select>
+      <input id="moQty" type="number" min="1" step="1" value="1" style="width:64px">
+      <button id="moAddItem" class="btn-ghost sm" type="button">➕ Add</button>
+    </div>
+    <div id="moItemList" class="muted sm-note" style="margin:6px 0">No items yet.</div>
+    <div class="totrow"><span><b>Total</b></span><span id="moTotal"><b>₱0.00</b></span></div>
+    <div class="two">
+      <div><label>📅 Delivery Date &amp; Time</label><input id="moWhen" type="datetime-local"></div>
+      <div><label>Payment</label><select id="moPay"><option value="COD">💵 Cash on Delivery</option><option value="GCash">🔵 GCash</option></select></div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin:8px 0"><input id="moPaid" type="checkbox"> Already PAID</label>
+    <div class="modal-actions">
+      <button class="btn-ghost" data-close>Cancel</button>
+      <button id="moSave" class="btn-primary">Save Order</button>
     </div>
   </div>
 </div>

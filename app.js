@@ -283,7 +283,8 @@ $$("#nav .nav-btn").forEach(b => b.onclick = async ()=>{
   if(b.dataset.page==="inventory") renderInventory();
   if(b.dataset.page==="stockin") renderStockIn();
   if(b.dataset.page==="sales") renderSales();
-  if(b.dataset.page==="online"){ renderOnline(); pollOrders(true); }
+    if(b.dataset.page==="online"){ renderOnline(); pollOrders(true); }
+    if(b.dataset.page==="orders"){ pollOrders(true); renderAllOrders(); }
   if(b.dataset.page==="reports") renderReports();
 });
 
@@ -1240,6 +1241,7 @@ async function pollOrders(silent=true){
     });
     if(onlineOrders.length) DB.set("seenOrderIds", seen.slice(-200));
     renderOrders();
+    renderAllOrders();
   }catch(e){}
 }
 function renderOrders(){
@@ -1257,7 +1259,15 @@ function renderOrders(){
       <div class="order-items">${o.items.map(i=>`${i.qty}× ${i.name} — ${peso(i.qty*i.price)}`).join("<br>")}
         <br><b>Total: ${peso(o.total)}${o.fee?` (incl. ${peso(o.fee)} delivery)`: ""} · ${o.payment==="GCash"?"🔵 GCash"+(o.ref?" ref "+o.ref:""):"💵 COD"}</b></div>
       <div class="order-addr">👤 ${o.customer.name} · 📞 ${o.customer.phone}<br>📍 ${o.customer.address}${o.customer.notes?"<br>📝 "+o.customer.notes:""}</div>
+      ${o.requestedTime?`<div class="order-addr" style="color:var(--ink)">📅 <b>Reservation:</b> customer requested ${o.requestedTime}</div>`:""}
+      ${o.deliveryTime?`<div class="order-addr" style="color:var(--ok)">🛵 <b>Scheduled delivery:</b> ${o.deliveryTime}</div>`:""}
+      ${o.note?`<div class="order-addr" style="border:1px dashed var(--line);border-radius:8px;padding:6px 8px">📌 ${o.note}</div>`:""}
+      ${o.status!=="rejected"?`<span class="pill ${o.paid?"ok":"warn"}">${o.paid?"✅ PAID":"💵 NOT PAID"}</span>`:""}
       <button class="btn-ghost sm" data-track="${o.id}">🔗 Copy Track Link</button>
+      ${["new","preparing","delivering","done"].includes(o.status)?`
+        <button class="btn-ghost sm" data-ord="settime" data-oid="${o.id}">📅 ${o.deliveryTime?"Change":"Set"} Delivery Time</button>
+        <button class="btn-ghost sm" data-ord="setnote" data-oid="${o.id}">📌 ${o.note?"Edit":"Pin"} Note</button>
+        <button class="btn-ghost sm" data-ord="paytoggle" data-oid="${o.id}">${o.paid?"💵 Mark UNPAID":"✅ Mark PAID"}</button>`:""}
       ${o.status==="new"?`
         <button class="btn-primary sm" data-ord="accept" data-oid="${o.id}">✔ Accept</button>
         ${o.payment==="GCash"
@@ -1288,6 +1298,154 @@ function renderOrders(){
     navigator.clipboard.writeText(url).then(()=>toast("Track link copied — send it to " + b.dataset.track + " 🔗"));
   });
 }
+
+/* ---------- ALL ORDERS page (online + manual) ---------- */
+function manualOrdersAll(){ return DB.get("manualOrders", []); }
+function saveManualOrders(arr){ DB.set("manualOrders", arr); }
+function renderAllOrders(){
+  const list = $("#allOrdersList");
+  if(!list) return;
+  const manual = manualOrdersAll();
+  const all = onlineOrders.concat(manual).sort((a,b)=>b.ts-a.ts);
+  const label = { new:"🆕 NEW", preparing:"👨‍🍳 Preparing", delivering:"🛵 Out for delivery", done:"✅ Delivered", rejected:"❌ Rejected", manual:"📝 Manual" };
+  const pillCls = { new:"ok", preparing:"warn", delivering:"warn", done:"ok", rejected:"bad", manual:"warn" };
+  list.innerHTML = all.length ? all.map(o=>{
+    const m = !!o.manual;
+    return `
+    <div class="order-card ${o.status==="new"?"new":""}">
+      <div class="order-head">
+        <span><b>${o.id}</b> · ${new Date(o.ts).toLocaleString("en-PH")} ${m?"· ✍️ typed in":""}</span>
+        <span class="pill ${pillCls[o.status]||""}">${label[o.status]||o.status}</span>
+      </div>
+      <div class="order-items">${o.items.map(i=>`${i.qty}× ${i.name} — ${peso(i.qty*i.price)}`).join("<br>")}
+        <br><b>Total: ${peso(o.total)}${o.fee?` (incl. ${peso(o.fee)} delivery)`: ""} · ${o.payment==="GCash"?"🔵 GCash":"💵 COD"}</b></div>
+      <div class="order-addr">👤 ${o.customer.name}${o.customer.phone?" · 📞 "+o.customer.phone:""}${o.customer.address?"<br>📍 "+o.customer.address:""}${o.customer.notes?"<br>📝 "+o.customer.notes:""}</div>
+      ${o.requestedTime?`<div class="order-addr" style="color:var(--ink)">📅 <b>Reservation:</b> customer requested ${o.requestedTime}</div>`:""}
+      ${o.deliveryTime?`<div class="order-addr" style="color:var(--ok)">🛵 <b>Scheduled delivery:</b> ${o.deliveryTime}</div>`:""}
+      ${o.note?`<div class="order-addr" style="border:1px dashed var(--line);border-radius:8px;padding:6px 8px">📌 ${o.note}</div>`:""}
+      ${o.status!=="rejected"?`<span class="pill ${o.paid?"ok":"warn"}">${o.paid?"✅ PAID":"💵 NOT PAID"}</span>`:""}
+      ${m ? `
+        <button class="btn-ghost sm" data-mord="settime" data-oid="${o.id}">📅 ${o.deliveryTime?"Change":"Set"} Delivery Time</button>
+        <button class="btn-ghost sm" data-mord="setnote" data-oid="${o.id}">📌 ${o.note?"Edit":"Pin"} Note</button>
+        <button class="btn-ghost sm" data-mord="paytoggle" data-oid="${o.id}">${o.paid?"💵 Mark UNPAID":"✅ Mark PAID"}</button>
+        ${o.status!=="done"?`<button class="btn-primary sm" data-mord="complete" data-oid="${o.id}">✅ Mark Delivered</button>`:""}
+        <button class="btn-danger sm" data-mord="delete" data-oid="${o.id}">🗑 Delete</button>`
+      : `<button class="btn-ghost sm" data-track="${o.id}">🔗 Copy Track Link</button>
+        ${["new","preparing","delivering","done"].includes(o.status)?`
+        <button class="btn-ghost sm" data-ord="settime" data-oid="${o.id}">📅 ${o.deliveryTime?"Change":"Set"} Delivery Time</button>
+        <button class="btn-ghost sm" data-ord="setnote" data-oid="${o.id}">📌 ${o.note?"Edit":"Pin"} Note</button>
+        <button class="btn-ghost sm" data-ord="paytoggle" data-oid="${o.id}">${o.paid?"💵 Mark UNPAID":"✅ Mark PAID"}</button>`:""}
+        ${o.status==="new"?`
+          <button class="btn-primary sm" data-ord="accept" data-oid="${o.id}">✔ Accept</button>
+          ${o.payment==="GCash"
+            ? `<button class="btn-danger sm" data-ord="rejectrefund" data-oid="${o.id}">💰 Cancel &amp; Refund</button>`
+            : `<button class="btn-danger sm" data-ord="reject" data-oid="${o.id}">✖ Reject</button>`}`:""}
+        ${o.status==="preparing"?`<button class="btn-primary sm" data-ord="deliver" data-oid="${o.id}">🛵 Out for Delivery</button>`:""}
+        ${o.status==="delivering"?`<button class="btn-primary sm" data-ord="complete" data-oid="${o.id}">✅ Delivered &amp; Paid</button>`:""}`}`;
+  }).join("") : `<p class="muted">No orders yet — online orders appear here automatically, or click "New Order (Manual)".</p>`;
+  $$("#allOrdersList [data-ord]").forEach(b=>b.onclick=()=>orderAction(b.dataset.oid, b.dataset.ord));
+  $$("#allOrdersList [data-mord]").forEach(b=>b.onclick=()=>manualOrderAction(b.dataset.oid, b.dataset.mord));
+  $$("#allOrdersList [data-track]").forEach(b=>b.onclick=()=>{
+    const url = shopLink() + "/order/" + b.dataset.track;
+    if(!url.includes("/shop/")) return toast("No server link yet", true);
+    navigator.clipboard.writeText(url).then(()=>toast("Track link copied 🔗"));
+  });
+}
+async function manualOrderAction(oid, action){
+  const arr = manualOrdersAll();
+  const o = arr.find(x=>x.id===oid);
+  if(!o) return;
+  if(action==="settime"){
+    const t = await inputModal("📅 Set the delivery date & time for this order.\n(e.g. 'Tomorrow 3:00 PM' or 'Aug 25, 10:00 AM')", "Delivery schedule");
+    if(t===null || t.trim().length<2) return;
+    o.deliveryTime = t.trim().slice(0,60);
+  }else if(action==="setnote"){
+    const n = await inputModal("📌 Pin a note / reminder for this order.\n(e.g. 'prepare night before, text customer')", "Note / reminder");
+    if(n===null || n.trim().length<2) return;
+    o.note = n.trim().slice(0,160);
+  }else if(action==="paytoggle"){
+    o.paid = !o.paid;
+  }else if(action==="complete"){
+    if(!confirm(`Mark order ${oid} as DELIVERED?\nThis records it as a sale${o.paid?"":" (unpaid)"}.`)) return;
+    const sale = {
+      id: uid(), receipt: "R" + String(uid()).slice(-8), date: new Date().toISOString(),
+      cashier: "Manual Order", customer: o.customer.name,
+      items: o.items.map(i=>({name:i.name, qty:i.qty, price:i.price, cost:(products.find(p=>p.name===i.name)||{}).cost||0})),
+      subtotal: o.itemsTotal, discount:0, discountPct:0, vat:0,
+      deliveryFee: o.fee||0, total: o.total,
+      payment: o.payment==="GCash" ? "GCash" : "Cash",
+      tendered:o.total, change:0, ref:"", sender:o.customer.phone,
+      manual:true, delivery:{ phone:o.customer.phone, address:o.customer.address, notes:o.customer.notes }
+    };
+    if(!onlineOnly()) o.items.forEach(i=>{ const p = products.find(p=>p.name===i.name); if(p) p.stock = Math.max(0, p.stock - i.qty); });
+    sales.push(sale); saveSales(); saveProducts(); syncSales(); syncCatalog(); renderDashboard();
+    o.status = "done";
+    toast(`Order ${oid} delivered — recorded as ${sale.receipt} 🧾`);
+  }else if(action==="delete"){
+    if(currentUser().role !== "owner" && !await ownerGate("Deleting an order requires the OWNER PIN")) return;
+    if(!confirm("Delete this manual order?"+(o.status!=="done"?" No sale will be recorded.":""))) return;
+    saveManualOrders(arr.filter(x=>x.id!==oid));
+    renderAllOrders();
+    return toast("Manual order deleted");
+  }
+  saveManualOrders(arr);
+  renderAllOrders();
+}
+
+/* manual order modal */
+let moItems = [];
+function moFillProducts(){
+  const sel = $("#moProduct");
+  sel.innerHTML = products.length
+    ? products.map(p=>`<option value="${p.id}">${p.name} — ${peso(p.price)} (${p.stock} left)</option>`).join("")
+    : `<option value="">No products in inventory</option>`;
+}
+function moRender(){
+  $("#moItemList").innerHTML = moItems.length
+    ? moItems.map((i,ix)=>`${i.qty}× ${i.name} — ${peso(i.qty*i.price)} <button class="btn-ghost sm" data-morem="${ix}" type="button">✖</button>`).join("<br>")
+    : "No items yet.";
+  const t = moItems.reduce((a,i)=>a+i.qty*i.price,0);
+  $("#moTotal").innerHTML = `<b>${peso(t)}</b>`;
+  $$("#moItemList [data-morem]").forEach(b=>b.onclick=()=>{ moItems.splice(+b.dataset.morem,1); moRender(); });
+}
+$("#addOrderBtn").onclick = ()=>{
+  if(currentUser().role !== "owner" && !ownerGate("Adding a manual order requires the OWNER PIN")) return;
+  moItems = [];
+  ["moName","moPhone","moAddr","moNotes","moWhen"].forEach(id=>$("#"+id).value="");
+  $("#moQty").value = 1; $("#moPay").value = "COD"; $("#moPaid").checked = false;
+  moFillProducts(); moRender();
+  openModal("#manualOrderModal");
+};
+$("#moAddItem").onclick = ()=>{
+  const p = products.find(x=>String(x.id)===String($("#moProduct").value));
+  const q = Math.max(1, Math.floor(+$("#moQty").value || 1));
+  if(!p) return toast("Add products in Inventory first", true);
+  const ex = moItems.find(i=>i.name===p.name);
+  if(ex) ex.qty += q; else moItems.push({ name:p.name, qty:q, price:p.price });
+  moRender();
+};
+$("#moSave").onclick = ()=>{
+  const name = $("#moName").value.trim();
+  if(!name) return toast("Enter the customer name", true);
+  if(!moItems.length) return toast("Add at least one item", true);
+  const whenRaw = $("#moWhen").value;
+  const whenTxt = whenRaw ? new Date(whenRaw).toLocaleString("en-PH", { dateStyle:"medium", timeStyle:"short" }) : "";
+  const itemsTotal = moItems.reduce((a,i)=>a+i.qty*i.price,0);
+  const o = {
+    id: "M" + Date.now().toString(36).toUpperCase() + Math.floor(Math.random()*1e3),
+    ts: Date.now(),
+    customer: { name, phone:$("#moPhone").value.trim(), address:$("#moAddr").value.trim(), notes:$("#moNotes").value.trim() },
+    items: moItems.map(i=>({name:i.name, qty:i.qty, price:i.price})),
+    itemsTotal, fee:0, total:itemsTotal,
+    payment: $("#moPay").value, ref:"",
+    requestedTime: whenTxt, deliveryTime:"", note:"",
+    paid: $("#moPaid").checked, manual:true, status:"manual"
+  };
+  saveManualOrders([o].concat(manualOrdersAll()));
+  closeModals();
+  renderAllOrders();
+  toast(`Manual order saved${whenTxt?" — delivery "+whenTxt:""} 📋`);
+};
 async function orderAction(oid, action){
   let refundRefVar = "";
   const lic = DB.get("license", null);
@@ -1300,8 +1458,21 @@ async function orderAction(oid, action){
     action = "reject_refund";
     refundRefVar = ref;
   }
+  let timeVar = "", noteVar = "";
+  if(action==="settime"){
+    const t = await inputModal("📅 Set the delivery time the customer will see on their tracking page.\n(e.g. 'Tomorrow 3:00 PM' or 'Aug 25, 10:00 AM')", "Delivery schedule");
+    if(t === null) return;
+    if(t.trim().length < 2){ toast("Enter the delivery time", true); return; }
+    timeVar = t.trim().slice(0, 60);
+  }
+  if(action==="setnote"){
+    const n = await inputModal("📌 Pin a note/reminder the customer will see on their tracking page.\n(e.g. 'Please prepare exact amount')", "Note for the customer");
+    if(n === null) return;
+    if(n.trim().length < 2){ toast("Enter a note (2+ characters)", true); return; }
+    noteVar = n.trim().slice(0, 160);
+  }
   try{
-    const r = await licApi("orderupdate", { code: lic.code, orderId: oid, action, refundRef: refundRefVar });
+    const r = await licApi("orderupdate", { code: lic.code, orderId: oid, action, refundRef: refundRefVar, time: timeVar, note: noteVar });
     if(!r.ok){ toast(r.error || "Order update failed", true); return; }
     if(action==="accept"){
       const o = onlineOrders.find(x=>x.id===oid);
@@ -1332,6 +1503,9 @@ async function orderAction(oid, action){
         toast(`Order ${oid} accepted — recorded as ${sale.receipt} 🧾`);
       }
     } else if(action==="complete") toast(`Order ${oid} delivered ✅`);
+    else if(action==="settime") toast("Delivery schedule set — customer can see it 📅");
+    else if(action==="setnote") toast("Note pinned — customer can see it 📌");
+    else if(action==="paytoggle") toast(r.order && r.order.paid ? "Order marked PAID ✅" : "Order marked NOT PAID 💵");
     else if(action==="reject") toast(`Order ${oid} rejected`);
     pollOrders(true);
   }catch(e){ toast("Connection problem", true); }

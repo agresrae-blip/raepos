@@ -254,7 +254,8 @@ async function handleApi(req, res, url) {
       store: { name: st.name || "Store", phone: st.phone || "", logo: st.logo || "",
                qr: st.qr || "", gcash: st.gcash || "", gcashName: st.gcashName || "" },
       order: { id: o.id, ts: o.ts, items: o.items, itemsTotal: o.itemsTotal, fee: o.fee,
-               total: o.total, payment: o.payment, status: o.status, refundRef: o.refundRef || "", qrOpen: !!o.qrOpen, customerName: o.customer.name } });
+               total: o.total, payment: o.payment, status: o.status, refundRef: o.refundRef || "", qrOpen: !!o.qrOpen, customerName: o.customer.name,
+               requestedTime: o.requestedTime || "", deliveryTime: o.deliveryTime || "", note: o.note || "", paid: !!o.paid } });
   }
 
   // public: storefront data
@@ -298,6 +299,7 @@ async function handleApi(req, res, url) {
         address: String(cust.address).slice(0,200), notes: String(cust.notes||"").slice(0,200) },
       items, itemsTotal, fee, total: Math.round((itemsTotal + fee)*100)/100,
       payment: b.payment === "GCash" ? "GCash" : "COD",
+      requestedTime: String(b.requestedTime || "").slice(0, 60),
       ref: String(b.ref||"").slice(0,40), status: "new" };
     const arr = readOrders(c.id); arr.unshift(order);
     writeOrders(c.id, arr.slice(0, 500));
@@ -353,6 +355,22 @@ async function handleApi(req, res, url) {
     }
     if (b.action === "qr_on" || b.action === "qr_off") {
       o.qrOpen = (b.action === "qr_on");
+      writeOrders(c.id, arr);
+      return send(res, 200, { ok: true, order: o });
+    }
+    if (b.action === "set_time") {
+      o.deliveryTime = String(b.time || "").slice(0, 60);
+      writeOrders(c.id, arr);
+      return send(res, 200, { ok: true, order: o });
+    }
+    if (b.action === "set_note") {
+      o.note = String(b.note || "").slice(0, 160);
+      writeOrders(c.id, arr);
+      return send(res, 200, { ok: true, order: o });
+    }
+    if (b.action === "pay_toggle") {
+      if (o.status === "rejected") return send(res, 400, { ok: false, error: "Rejected orders have no payment." });
+      o.paid = !o.paid;
       writeOrders(c.id, arr);
       return send(res, 200, { ok: true, order: o });
     }

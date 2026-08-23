@@ -103,6 +103,9 @@ input:focus,textarea:focus{background:var(--yellow)}
     <label>Mobile Number *</label><input id="fPhone" placeholder="09xx xxx xxxx" inputmode="tel">
     <label>Delivery Address *</label><textarea id="fAddr" rows="2" placeholder="House #, Street, Barangay"></textarea>
     <label>Notes for the store (optional)</label><input id="fNotes" placeholder="e.g. extra ice, call on arrival">
+    <label>📅 Reservation — preferred delivery date &amp; time (optional)</label>
+    <input id="fWhen" type="datetime-local">
+    <div class="s" style="margin:2px 0 8px">Pre-order for later! The store will confirm your delivery schedule.</div>
     <label>Payment Method</label>
     <div class="pay">
       <button id="payCod" class="sel" onclick="setPay('COD')">💵 Cash on Delivery</button>
@@ -149,6 +152,10 @@ function trackPage(){
           <div style="font-size:3rem">${S[0]}</div>
           <h2 style="color:#fff">${S[1]}</h2>
           <p style="color:#8b93b5">Order <b style="color:#fff">${d.order.id}</b> · ${new Date(d.order.ts).toLocaleString("en-PH")}</p>
+          ${d.order.paid ? `<p style="color:#8fe0b1;margin-top:6px">✅ <b>PAID</b> — thank you!</p>` : (d.order.status!=="rejected" ? `<p style="color:#f2c979;margin-top:6px">💵 ${d.order.payment==="GCash"?"Not yet paid":"Pay on delivery"}</p>`:"")}
+          ${d.order.requestedTime ? `<p style="color:#8b93b5;margin-top:6px">📅 Your requested time: <b style="color:#fff">${d.order.requestedTime}</b></p>`:""}
+          ${d.order.deliveryTime ? `<p style="color:#8fe0b1;margin-top:6px">🛵 Store scheduled delivery: <b>${d.order.deliveryTime}</b></p>`:""}
+          ${d.order.note ? `<p style="color:#fff;margin-top:8px;background:rgba(242,201,121,.12);border:1px dashed #f2c979;border-radius:10px;padding:8px 10px">📌 Note from the store: <b>${d.order.note}</b></p>`:""}
           ${d.order.status==="rejected" && d.order.refundRef ? `<p style="color:#8fe0b1;margin-top:6px">💰 GCash refund sent — reference: <b>${d.order.refundRef}</b></p>`:""}
           ${d.order.payment==="GCash" && !d.order.qrOpen && d.order.status!=="rejected" ? `<p style="color:var(--mut);font-size:.82rem;margin-top:10px">💱 GCash scan-to-pay will appear here when your order arrives.</p>`:""}
           ${d.order.payment==="GCash" && d.order.qrOpen ? `
@@ -271,10 +278,12 @@ function setPay(p){
 async function placeOrder(){
   const name = $("#fName").value.trim(), phone = $("#fPhone").value.trim(), addr = $("#fAddr").value.trim();
   if(!name || !phone || !addr){ $("#formErr").textContent = "Please fill in your name, mobile number and delivery address."; return; }
+  const whenRaw = $("#fWhen").value;
+  const whenTxt = whenRaw ? new Date(whenRaw).toLocaleString("en-PH", { dateStyle:"medium", timeStyle:"short" }) : "";
   const body = {
     customer: { name, phone, address: addr, notes: $("#fNotes").value.trim() },
     items: Object.entries(cart).map(([n,q])=>({name:n, qty:q})),
-    payment: pay, ref: $("#fRef").value.trim()
+    payment: pay, ref: $("#fRef").value.trim(), requestedTime: whenTxt
   };
   const btn = document.querySelector(".btn"); btn.disabled = true; btn.textContent = "Sending…";
   try{
@@ -282,6 +291,7 @@ async function placeOrder(){
       method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body)
     }).then(x=>x.json());
     if(!r.ok){ $("#formErr").textContent = r.error || "Could not place order."; btn.disabled = false; btn.textContent = "Place Order ▸"; return; }
+    cart = {}; cartUI();
     closeCart();
     $("#content").classList.add("hidden");
     const d = $("#doneBox"); d.classList.remove("hidden");

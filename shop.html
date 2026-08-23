@@ -219,13 +219,14 @@ function renderGrid(){
         </div>`
       : `<div class="item" onclick="add('${nm}')">
           ${visual}<h4>${p.name}</h4>
-          <div class="p">${peso(p.price)}</div><div class="s">${p.stock} available</div>
+          <div class="p">${peso(p.price)}</div><div class="s">${store && store.mode==="online" ? "✔ Available" : p.stock+" available"}</div>
         </div>`;
   }).join("");
 }
 function add(name){
   const p = items.find(x=>x.name===name);
   if(p.avail === 0) return;
+  if(store && store.mode==="online") { cart[name] = (cart[name]||0) + 1; cartUI(); return; }
   if((cart[name]||0) >= p.stock) return;
   cart[name] = (cart[name]||0) + 1; cartUI();
 }

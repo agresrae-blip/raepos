@@ -388,3 +388,12 @@ label{display:block;font-size:.85rem;color:var(--mut);margin:10px 0 4px}
 .item.unavail{opacity:.62;filter:saturate(.35);cursor:not-allowed}
 .item.unavail .s{color:#b3261e;font-weight:700}
 .imgwrap img.grayed{filter:grayscale(.8)}
+
+/* ONLINE ONLY business mode: hide stock/POS features */
+body.mode-online .nav-btn[data-page="pos"],
+body.mode-online .nav-btn[data-page="stockin"],
+body.mode-online .stat-card.c4,
+body.mode-online #page-dashboard .dash-cols .panel:nth-child(2),
+body.mode-online #lowStockBadge{display:none!important}
+body.mode-online #page-inventory th:nth-child(5),
+body.mode-online #page-inventory td:nth-child(5){display:none}

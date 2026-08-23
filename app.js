@@ -11,8 +11,22 @@ let products  = DB.get("products", null);
 let sales     = DB.get("sales", []);
 let settings  = DB.get("settings", {
   name:"My Store", address:"123 Main St.", phone:"0917 000 0000",
-  cashier:"Cashier", vat:0, footer:"Thank you for shopping!", pin:"1234"
+  cashier:"Cashier", vat:0, footer:"Thank you for shopping!", pin:"1234", bizMode:"store"
 });
+const onlineOnly = () => settings.bizMode === "online";
+function applyMode(){
+  document.body.classList.toggle("mode-online", onlineOnly());
+  const active = document.querySelector(".page.active");
+  if(onlineOnly() && active && (active.id==="page-pos" || active.id==="page-stockin"))
+    document.querySelector('.nav-btn[data-page="dashboard"]').click();
+  const btn = $("#bizModeBtn");
+  if(btn){
+    btn.textContent = onlineOnly() ? "🌐 Online Only — tap to switch to Store" : "🏪 Store Mode — tap to switch to Online Only";
+    $("#bizModeDesc").textContent = onlineOnly()
+      ? "Online Only: you list products and prepare them when a customer orders. Register, Stock In and stock counting are hidden. Customers order from your online link."
+      : "Store Mode: full POS — walk-in Register sales, stock counts, Stock In deliveries and supplier records.";
+  }
+}
 let cart = [];        // {id, name, price, cost, qty}
 let discountPct = 0;  // 0/5/10/20
 let payMethod = null; // selected at checkout
@@ -260,6 +274,8 @@ $$("#nav .nav-btn").forEach(b => b.onclick = async ()=>{
   if((b.dataset.page==="settings" || b.dataset.page==="stockin") && currentUser().role !== "owner"){
     if(!await ownerGate((b.dataset.page==="stockin" ? "Stock In is for the OWNER only" : "Settings is for the OWNER only") + " — enter the owner PIN")) return;
   }
+  if(onlineOnly() && (b.dataset.page==="pos" || b.dataset.page==="stockin"))
+    return toast(onlineOnly() ? "Register & Stock In are hidden in Online Only mode (Settings → Business Mode)" : "", true);
   $$("#nav .nav-btn").forEach(x=>x.classList.remove("active")); b.classList.add("active");
   $$(".page").forEach(p=>p.classList.remove("active"));
   $("#page-"+b.dataset.page).classList.add("active");
@@ -1157,7 +1173,8 @@ function syncCatalog(){
   licApi("catalog", {
     code: lic.code,
     online: !!settings.onlineStore,
-    products: products.filter(p=>p.stock>0).map(p=>({name:p.name, price:p.price, emoji:p.emoji||"📦", stock:p.stock, avail: p.avail===0?0:1, img:p.img||""})),
+    mode: onlineOnly() ? "online" : "store",
+    products: (onlineOnly() ? products : products.filter(p=>p.stock>0)).map(p=>({name:p.name, price:p.price, emoji:p.emoji||"📦", stock:p.stock, avail: p.avail===0?0:1, img:p.img||""})),
     store: { name:settings.name, logo:settings.logo||"", address:settings.address, phone:settings.phone, theme:settings.theme||"sketchy", font:settings.font||"doodle", messenger:settings.messenger||"", tagline:settings.tagline||"", announce:settings.announce||"",
              gcash:a.gcashNum||"", gcashName:a.gcashName||"", qr:settings.qr||"", deliveryFee:settings.deliveryFee||0 }
   }).catch(()=>{});
@@ -1289,14 +1306,16 @@ async function orderAction(oid, action){
     if(action==="accept"){
       const o = onlineOrders.find(x=>x.id===oid);
       if(o){
-        // warn owner if stock can't cover every item (e.g. two customers bought the last stock)
-        const shortage = o.items
-          .map(i=>({name:i.name, need:i.qty, have:(products.find(p=>p.name===i.name)||{stock:0}).stock}))
-          .filter(x=>x.have < x.need);
-        if(shortage.length){
-          const NL = String.fromCharCode(10);
-          const msg = "Not enough stock:" + NL + shortage.map(s=>s.name+": need "+s.need+", have "+s.have).join(", ") + NL + NL + "Accept anyway (stock will show 0)?";
-          if(!confirm(msg)) return;
+        // warn owner if stock can't cover every item (skipped in Online Only mode — items are prepared per order)
+        if(!onlineOnly()){
+          const shortage = o.items
+            .map(i=>({name:i.name, need:i.qty, have:(products.find(p=>p.name===i.name)||{stock:0}).stock}))
+            .filter(x=>x.have < x.need);
+          if(shortage.length){
+            const NL = String.fromCharCode(10);
+            const msg = "Not enough stock:" + NL + shortage.map(s=>s.name+": need "+s.need+", have "+s.have).join(", ") + NL + NL + "Accept anyway (stock will show 0)?";
+            if(!confirm(msg)) return;
+          }
         }
         const sale = {
           id: uid(), receipt: "R" + String(uid()).slice(-8), date: new Date().toISOString(),
@@ -1308,7 +1327,7 @@ async function orderAction(oid, action){
           tendered:o.total, change:0, ref:o.ref||"", sender:o.customer.phone,
           online:true, delivery:{ phone:o.customer.phone, address:o.customer.address, notes:o.customer.notes }
         };
-        o.items.forEach(i=>{ const p = products.find(x=>x.name===i.name); if(p) p.stock = Math.max(0, p.stock - i.qty); });
+        if(!onlineOnly()) o.items.forEach(i=>{ const p = products.find(x=>x.name===i.name); if(p) p.stock = Math.max(0, p.stock - i.qty); });
         sales.push(sale); saveSales(); saveProducts(); syncSales(); syncCatalog(); renderDashboard();
         toast(`Order ${oid} accepted — recorded as ${sale.receipt} 🧾`);
       }
@@ -1464,5 +1483,14 @@ if ("serviceWorker" in navigator) {
 /* ---------- init ---------- */
 if(!shiftStart){ shiftStart = Date.now(); DB.set("shiftStart", shiftStart); }
 refreshCats(); renderProducts(); renderCart(); renderDashboard(); renderCashiers();
-loadSettingsForm(); refreshFoot(); applyLogo(); applyQr(); applyTheme(); applyFont(); renderThemePicker(); renderFontPicker(); renderHeldBadge(); renderOnline();
+loadSettingsForm(); refreshFoot(); applyLogo(); applyQr(); applyTheme(); applyFont(); applyMode(); renderThemePicker(); renderFontPicker(); renderHeldBadge(); renderOnline();
+$("#bizModeBtn").onclick = ()=>{
+  const goingOnline = !onlineOnly();
+  if(!confirm(goingOnline
+    ? "Switch to ONLINE ONLY mode?\n\nRegister, Stock In and stock counting will be hidden. Your products, prices and online store stay. You can switch back anytime."
+    : "Switch back to STORE mode?\n\nRegister, Stock In and stock counting will be shown again.")) return;
+  settings.bizMode = goingOnline ? "online" : "store";
+  saveSettings(); applyMode(); syncCatalog();
+  toast(goingOnline ? "Online Only mode ON — orders come from your online store" : "Store mode ON — Register & Stock In are back");
+};
 boot();

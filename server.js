@@ -219,6 +219,7 @@ async function handleApi(req, res, url) {
     const prev = c.catalog && c.catalog.store || {};
     c.catalog = {
       online: !!b.online, updatedAt: Date.now(),
+      mode: b.mode === "online" ? "online" : "store",
       store: { name: String((b.store||{}).name||"Store"),
                // keep uploaded images/pay details if a device without them syncs (prevents accidental QR wipe)
                logo: (b.store||{}).logo || prev.logo || "",
@@ -263,7 +264,9 @@ async function handleApi(req, res, url) {
     if (!c || !c.catalog) return send(res, 404, { ok: false, error: "Store not found." });
     if (c.revoked) return send(res, 403, { ok: false, error: "Store unavailable." });
     if (!c.catalog.online) return send(res, 503, { ok: false, error: "offline" });
-    return send(res, 200, { ok: true, store: c.catalog.store, products: c.catalog.products.filter(p=>p.stock>0) });
+    const listAll = c.catalog.mode === "online";
+    return send(res, 200, { ok: true, store: Object.assign({ mode: c.catalog.mode || "store" }, c.catalog.store),
+      products: c.catalog.products.filter(p => listAll ? p.avail !== 0 : p.stock > 0) });
   }
 
   // public: place an order
@@ -279,10 +282,13 @@ async function handleApi(req, res, url) {
     // rebuild the order from catalog prices (never trust client prices)
     const items = [];
     let total = 0;
+    const onlineMode = c.catalog.mode === "online";
     (Array.isArray(b.items) ? b.items : []).slice(0, 100).forEach(i => {
       const p = c.catalog.products.find(x => x.name === i.name);
       const qty = Math.max(1, Math.min(999, parseInt(i.qty, 10) || 0));
-      if (p && qty > 0 && qty <= p.stock) { items.push({ name: p.name, qty, price: p.price }); total += p.price * qty; }
+      // online-only shops prepare per order, so stock count doesn't limit qty
+      const allowed = onlineMode ? p.avail !== 0 : qty <= p.stock;
+      if (p && qty > 0 && allowed) { items.push({ name: p.name, qty, price: p.price }); total += p.price * qty; }
     });
     if (!items.length) return send(res, 400, { ok: false, error: "Your cart is empty or items went out of stock." });
     const fee = Math.max(0, +(c.catalog.store.deliveryFee) || 0);

@@ -285,7 +285,7 @@ $$("#nav .nav-btn").forEach(b => b.onclick = async ()=>{
   if(b.dataset.page==="sales") renderSales();
     if(b.dataset.page==="online"){ renderOnline(); pollOrders(true); }
     if(b.dataset.page==="orders"){ pollOrders(true); renderAllOrders(); }
-    if(b.dataset.page==="completed"){ renderCompletedOrders(); }
+    if(b.dataset.page==="completed"){ pollOrders(true); renderCompletedOrders(); }
   if(b.dataset.page==="reports") renderReports();
 });
 
@@ -1305,7 +1305,7 @@ function renderOrders(){
 /* ---------- ALL ORDERS page (online + manual) + COMPLETED ORDERS page ---------- */
 function manualOrdersAll(){ return DB.get("manualOrders", []); }
 function saveManualOrders(arr){ DB.set("manualOrders", arr); }
-function orderCardHTML(o){
+function orderCardHTML(o, doneView){
   const m = !!o.manual;
   const label = { new:"🆕 NEW", preparing:"👨‍🍳 Preparing", delivering:"🛵 Out for delivery", done:"✅ Delivered", rejected:"❌ Rejected", manual:"📝 Manual" };
   const pillCls = { new:"ok", preparing:"warn", delivering:"warn", done:"ok", rejected:"bad", manual:"warn" };
@@ -1321,7 +1321,11 @@ function orderCardHTML(o){
       ${o.requestedTime?`<div class="order-addr" style="color:var(--ink)">📅 <b>Reservation:</b> customer requested ${o.requestedTime}</div>`:""}
       ${o.deliveryTime?`<div class="order-addr" style="color:var(--ok)">🛵 <b>Scheduled delivery:</b> ${o.deliveryTime}</div>`:""}
       ${o.note?`<div class="order-addr" style="border:1px dashed var(--line);border-radius:8px;padding:6px 8px">📌 ${o.note}</div>`:""}
-      ${o.status!=="rejected"?`<span class="pill ${o.paid?"ok":"warn"}">${o.paid?"✅ PAID":"💵 NOT PAID"}</span>`:""}
+      ${doneView ? `
+        ${m ? `<button class="btn-danger sm" data-mord="delete" data-oid="${o.id}">🗑 Delete</button>`
+             : `<button class="btn-ghost sm" data-track="${o.id}">🔗 Copy Track Link</button>
+        <button class="btn-danger sm" data-delord="${o.id}">🗑 Delete</button>`}`
+      : `${o.status!=="rejected"?`<span class="pill ${o.paid?"ok":"warn"}">${o.paid?"✅ PAID":"💵 NOT PAID"}</span>`:""}
       ${m ? `
         <button class="btn-ghost sm" data-mord="settime" data-oid="${o.id}">📅 ${o.deliveryTime?"Change":"Set"} Delivery Time</button>
         <button class="btn-ghost sm" data-mord="setnote" data-oid="${o.id}">📌 ${o.note?"Edit":"Pin"} Note</button>
@@ -1340,7 +1344,7 @@ function orderCardHTML(o){
             : `<button class="btn-danger sm" data-ord="reject" data-oid="${o.id}">✖ Reject</button>`}`:""}
         ${o.status==="preparing"?`<button class="btn-primary sm" data-ord="deliver" data-oid="${o.id}">🛵 Out for Delivery</button>`:""}
         ${o.status==="delivering"?`<button class="btn-primary sm" data-ord="complete" data-oid="${o.id}">✅ Delivered &amp; Paid</button>`:""}
-        <button class="btn-danger sm" data-delord="${o.id}">🗑 Delete</button>`}`;
+        <button class="btn-danger sm" data-delord="${o.id}">🗑 Delete</button>`}`}`;
 }
 function wireOrderCards(scopeSel){
   $$(scopeSel+" [data-ord]").forEach(b=>b.onclick=()=>orderAction(b.dataset.oid, b.dataset.ord));
@@ -1372,7 +1376,7 @@ function renderAllOrders(){
 function renderCompletedOrders(){
   if(!$("#completedOrdersList")) return;
   const done = onlineOrders.concat(manualOrdersAll()).filter(o=>o.status==="done").sort((a,b)=>b.ts-a.ts);
-  $("#completedOrdersList").innerHTML = done.length ? done.map(orderCardHTML).join("")
+  $("#completedOrdersList").innerHTML = done.length ? done.map(o=>orderCardHTML(o, true)).join("")
     : `<p class="muted">No completed orders yet — orders you mark Delivered move here automatically.</p>`;
   wireOrderCards("#completedOrdersList");
 }

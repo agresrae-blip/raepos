@@ -1003,17 +1003,22 @@ function calcAll(){
   const profitTotal = useTarget ? target : cost * (margin > 0 ? margin : 30) / 100;
   const price = (cost + profitTotal) / qty;
   const round2 = n => Math.round(n * 100) / 100;
-  const sugPrice = Math.ceil(price); // clean whole-peso price that covers the profit
+  // system recommendation: round up to a customer-friendly price (nearest ₱5) so it still covers the target profit
+  const recPrice = Math.max(Math.ceil(price / 5) * 5, Math.ceil(price));
+  const recProfit = recPrice * qty - cost;
   out.innerHTML = `
-    <div class="totrow"><span>Cost per piece</span><b>${peso(costPerPc)}</b></div>
-    <div class="totrow"><span>Sell at (exact)</span><b>${peso(round2(price))}</b> / pc</div>
-    <div class="totrow" style="color:var(--ok)"><span>Suggested price (rounded up)</span><b style="color:var(--ok)">${peso(sugPrice)}</b> / pc</div>
+    <div class="totrow"><span>Cost per piece (gastos)</span><b>${peso(costPerPc)}</b></div>
+    <div class="totrow"><span>Minimum price (exact)</span><b>${peso(round2(price))}</b> / pc</div>
+    <div class="totrow" style="font-size:1.05em"><span>🤖 <b>Recommended price</b></span><b style="color:var(--ok);font-size:1.15em">${peso(recPrice)}</b> / pc</div>
+    <p class="muted sm-note" style="margin:4px 0 8px">Rounded up to a friendly price so customers see a clean number — and you still hit your goal.</p>
     <hr class="sep">
-    <div class="totrow"><span>If you sell all ${qty} at ${peso(sugPrice)}:</span></div>
-    <div class="totrow"><span>Total sales (revenue)</span><b>${peso(sugPrice * qty)}</b></div>
-    <div class="totrow"><span>Total gastos (cost)</span><b>${peso(cost)}</b></div>
-    <div class="totrow"><span><b>💰 Total kita / income</b></span><b style="color:var(--ok)">${peso(sugPrice * qty - cost)}</b></div>
-    <p class="muted sm-note" style="margin-top:6px">${useTarget ? "Based on your target kita of " + peso(target) + "." : "Based on a " + (margin > 0 ? margin : 30) + "% profit margin."} Rounding the price up to ${peso(sugPrice)} gives you a little extra.</p>`;
+    <div class="totrow"><span><b>📋 Estimated if you sell all ${qty} at ${peso(recPrice)}:</b></span></div>
+    <div class="totrow"><span>Total sales (revenue)</span><b>${peso(recPrice * qty)}</b></div>
+    <div class="totrow"><span>− Total gastos (cost)</span><b>${peso(cost)}</b></div>
+    <div class="totrow"><span><b>💰 Total kita / income</b></span><b style="color:var(--ok)">${peso(round2(recProfit))}</b></div>
+    <div class="totrow"><span>Kita per piece</span><b>${peso(round2(recPrice - costPerPc))}</b></div>
+    <div class="totrow"><span>Profit margin</span><b>${round2(recProfit / cost * 100)}%</b></div>
+    <p class="muted sm-note" style="margin-top:6px">${useTarget ? "Your target kita was " + peso(target) : "Based on a " + (margin > 0 ? margin : 30) + "% profit margin (needed " + peso(profitTotal) + " kita)."}${recProfit - profitTotal > 0 ? " The recommended price gives you " + peso(round2(recProfit - profitTotal)) + " EXTRA 💚" : ""}</p>`;
   // price check
   const price2 = num("calcPrice");
   if(price2 > 0){

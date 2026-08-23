@@ -1248,6 +1248,7 @@ function renderOrders(){
   const badge = $("#ordersBadge");
   const news = onlineOrders.filter(o=>o.status==="new").length;
   if(news){ badge.textContent = news; badge.classList.remove("hidden"); } else badge.classList.add("hidden");
+  if(!$("#ordersList")) return; // orders panel moved to the All Orders page
   const label = { new:"🆕 NEW", preparing:"👨‍🍳 Preparing", delivering:"🛵 Out for delivery", done:"✅ Delivered", rejected:"❌ Rejected" };
   const pillCls = { new:"ok", preparing:"warn", delivering:"warn", done:"ok", rejected:"bad" };
   $("#ordersList").innerHTML = onlineOrders.length ? onlineOrders.map(o=>`
@@ -1463,6 +1464,8 @@ async function orderAction(oid, action){
     refundRefVar = ref;
   }
   let timeVar = "", noteVar = "";
+  // UI names -> server action names
+  const serverAction = { settime:"set_time", setnote:"set_note", paytoggle:"pay_toggle", qron:"qr_on", qroff:"qr_off" }[action] || action;
   if(action==="settime"){
     const t = await inputModal("📅 Set the delivery time the customer will see on their tracking page.\n(e.g. 'Tomorrow 3:00 PM' or 'Aug 25, 10:00 AM')", "Delivery schedule");
     if(t === null) return;
@@ -1476,7 +1479,7 @@ async function orderAction(oid, action){
     noteVar = n.trim().slice(0, 160);
   }
   try{
-    const r = await licApi("orderupdate", { code: lic.code, orderId: oid, action, refundRef: refundRefVar, time: timeVar, note: noteVar });
+    const r = await licApi("orderupdate", { code: lic.code, orderId: oid, action: serverAction, refundRef: refundRefVar, time: timeVar, note: noteVar });
     if(!r.ok){ toast(r.error || "Order update failed", true); return; }
     if(action==="accept"){
       const o = onlineOrders.find(x=>x.id===oid);
